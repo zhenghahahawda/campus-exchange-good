@@ -1,0 +1,19 @@
+export const SESSION_STATUS = {
+  INACTIVE: 0,
+  ACTIVE: 1
+};
+
+export const SESSION_STATUS_LABELS = {
+  [SESSION_STATUS.INACTIVE]: '已失效',
+  [SESSION_STATUS.ACTIVE]: '活跃'
+};
+
+export const SESSION_STATUS_COLORS = {
+  [SESSION_STATUS.INACTIVE]: 'info',
+  [SESSION_STATUS.ACTIVE]: 'success'
+};
+
+export const PAGINATION_CONFIG = {
+  DEFAULT_PAGE: 1,
+  PAGE_SIZES: [10, 20, 50, 100]
+};

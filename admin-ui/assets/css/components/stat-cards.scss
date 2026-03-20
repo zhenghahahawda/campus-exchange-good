@@ -1,0 +1,88 @@
+/**
+ * 统计卡片共享样式
+ * 用于 StatCards 和 OrderStatCards 组件
+ */
+@import '@/assets/css/themes/index.scss';
+
+.stats-row {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba($color-text-secondary, 0.2);
+    border-radius: 3px;
+  }
+
+  .stat-card {
+    @include glass-effect;
+    padding: 12px 20px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 160px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+
+    &:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    &.active {
+      background: rgba(var(--color-primary-rgb), 0.1);
+      border-color: rgba(var(--color-primary-rgb), 0.3);
+      box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.15);
+
+      .stat-label {
+        color: $color-primary;
+        font-weight: 600;
+      }
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+
+      &.bg-primary-soft { background: rgba(var(--color-primary-rgb), 0.1); color: $color-primary; }
+      &.bg-info-soft { background: rgba(var(--color-secondary-info-rgb), 0.1); color: $color-secondary-info; }
+      &.bg-warning-soft { background: rgba(var(--color-secondary-warning-rgb), 0.1); color: $color-secondary-warning; }
+      &.bg-success-soft { background: rgba(var(--color-secondary-success-rgb), 0.1); color: $color-secondary-success; }
+      &.bg-danger-soft { background: rgba(var(--color-secondary-danger-rgb), 0.1); color: $color-secondary-danger; }
+      &.bg-secondary-soft { background: rgba($color-text-secondary, 0.1); color: $color-text-secondary; }
+    }
+
+    .stat-info {
+      display: flex;
+      flex-direction: column;
+
+      .stat-label {
+        font-size: 12px;
+        color: $color-text-secondary;
+      }
+
+      .stat-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: $color-text-primary;
+
+        &.text-info { color: $color-secondary-info; }
+        &.text-warning { color: $color-secondary-warning; }
+        &.text-success { color: $color-secondary-success; }
+        &.text-danger { color: $color-secondary-danger; }
+        &.text-secondary { color: $color-text-secondary; }
+      }
+    }
+  }
+}

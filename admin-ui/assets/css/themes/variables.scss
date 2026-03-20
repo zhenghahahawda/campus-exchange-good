@@ -1,0 +1,958 @@
+/* ==========================================================================
+   CSS 变量主题系统 - 优化版
+   ========================================================================== */
+
+:root {
+  /* 基础颜色 */
+  --color-primary: #0075ff;
+  --color-primary-rgb: 0, 117, 255;
+  --color-secondary-success: #2dce89;
+  --color-secondary-success-rgb: 45, 206, 137;
+  --color-secondary-warning: #fb6340;
+  --color-secondary-warning-rgb: 251, 99, 64;
+  --color-secondary-danger: #f5365c;
+  --color-secondary-danger-rgb: 245, 54, 92;
+  --color-secondary-info: #11cdef;
+  --color-secondary-info-rgb: 17, 205, 239;
+
+  /* 背景与表面 */
+  --color-bg-page: #0f172a;
+  --color-bg-surface: #1e293b;
+  --color-border: #334155;
+
+  /* 文字 */
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-text-disabled: #475569;
+
+  /* 组件 */
+  --color-sidebar-user-card-bg: #1e293b;
+  --color-nav-active-bg: #0075ff;
+  --color-nav-active-text: #ffffff;
+  --color-pill-bg: #1e293b;
+  --color-pill-active-bg: #0075ff;
+  --color-pill-active-text: #ffffff;
+
+  /* 玻璃拟态 */
+  --glass-bg: rgba(30, 41, 59, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --glass-blur: 20px;
+  --card-bg: rgba(30, 41, 59, 0.8);
+  --card-border: rgba(255, 255, 255, 0.05);
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* ==========================================================================
+   深色主题
+   ========================================================================== */
+[data-theme='dark-gold'] {
+  --color-primary: #D4AF37;
+  --color-primary-rgb: 212, 175, 55;
+  --color-bg-page: #0A0A0A;
+  --color-bg-surface: #1A1A1A;
+  --color-border: #333333;
+  --color-sidebar-user-card-bg: rgba(26, 26, 26, 0.8);
+  --color-nav-active-bg: #D4AF37;
+  --color-nav-active-text: #0A0A0A;
+  --color-pill-bg: rgba(26, 26, 26, 0.8);
+  --color-pill-active-bg: #D4AF37;
+  --color-pill-active-text: #0A0A0A;
+  --glass-bg: rgba(26, 26, 26, 0.7);
+  --glass-border: rgba(212, 175, 55, 0.15);
+  --card-bg: rgba(26, 26, 26, 0.8);
+  --card-border: rgba(212, 175, 55, 0.1);
+}
+
+[data-theme='cyberpunk'] {
+  --color-primary: #FF00FF;
+  --color-primary-rgb: 255, 0, 255;
+  --color-secondary-success: #00FF9D;
+  --color-secondary-warning: #FFE600;
+  --color-secondary-danger: #FF0055;
+  --color-bg-page: #0D0221;
+  --color-bg-surface: #1A0B2E;
+  --color-border: #2D1B4E;
+  --color-sidebar-user-card-bg: rgba(26, 11, 46, 0.7);
+  --color-nav-active-bg: #FF00FF;
+  --color-nav-active-text: #0D0221;
+  --color-pill-bg: rgba(26, 11, 46, 0.7);
+  --color-pill-active-bg: #FF00FF;
+  --color-pill-active-text: #0D0221;
+  --glass-bg: rgba(26, 11, 46, 0.6);
+  --glass-border: rgba(255, 0, 255, 0.2);
+  --card-bg: rgba(26, 11, 46, 0.7);
+  --card-border: rgba(255, 0, 255, 0.15);
+}
+
+[data-theme='neon-night'] {
+  --color-primary: #FF2E63;
+  --color-primary-rgb: 255, 46, 99;
+  --color-secondary-success: #08D9D6;
+  --color-bg-page: #08090A;
+  --color-bg-surface: #1A1D23;
+  --color-border: #2C3038;
+  --color-sidebar-user-card-bg: rgba(26, 29, 35, 0.8);
+  --color-nav-active-bg: #FF2E63;
+  --color-nav-active-text: #08090A;
+  --color-pill-bg: rgba(26, 29, 35, 0.8);
+  --color-pill-active-bg: #FF2E63;
+  --color-pill-active-text: #08090A;
+  --glass-bg: rgba(26, 29, 35, 0.7);
+  --glass-border: rgba(255, 46, 99, 0.2);
+  --card-bg: rgba(26, 29, 35, 0.8);
+  --card-border: rgba(255, 46, 99, 0.15);
+}
+
+[data-theme='deep-ocean'] {
+  --color-primary: #00CED1;
+  --color-primary-rgb: 0, 206, 209;
+  --color-bg-page: #001F3F;
+  --color-bg-surface: #003366;
+  --color-border: #004080;
+  --color-sidebar-user-card-bg: rgba(0, 51, 102, 0.7);
+  --color-nav-active-bg: #00CED1;
+  --color-nav-active-text: #001F3F;
+  --color-pill-bg: rgba(0, 51, 102, 0.7);
+  --color-pill-active-bg: #00CED1;
+  --color-pill-active-text: #001F3F;
+  --glass-bg: rgba(0, 51, 102, 0.6);
+  --glass-border: rgba(0, 206, 209, 0.2);
+  --card-bg: rgba(0, 51, 102, 0.7);
+  --card-border: rgba(0, 206, 209, 0.15);
+}
+
+[data-theme='aurora'] {
+  --color-primary: #00FFA3;
+  --color-primary-rgb: 0, 255, 163;
+  --color-secondary-info: #6C63FF;
+  --color-bg-page: #0A1128;
+  --color-bg-surface: #1C2541;
+  --color-border: #3A506B;
+  --glass-bg: rgba(28, 37, 65, 0.6);
+  --glass-border: rgba(0, 255, 163, 0.2);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 255, 163, 0.2), 0 0 60px 0 rgba(108, 99, 255, 0.15);
+  --glass-blur: 24px;
+  --card-bg: rgba(28, 37, 65, 0.6);
+  --card-border: rgba(0, 255, 163, 0.25);
+  --card-shadow: 0 8px 32px 0 rgba(0, 255, 163, 0.25), 0 0 70px 0 rgba(108, 99, 255, 0.2);
+}
+
+[data-theme='iced-americano'] {
+  --color-primary: #C69F7F;
+  --color-primary-rgb: 198, 159, 127;
+  --color-bg-page: #1A1512;
+  --color-bg-surface: #2C241F;
+  --color-border: #3E342E;
+  --color-sidebar-user-card-bg: rgba(44, 36, 31, 0.7);
+  --color-nav-active-bg: #C69F7F;
+  --color-nav-active-text: #1A1512;
+  --color-pill-bg: rgba(44, 36, 31, 0.7);
+  --color-pill-active-bg: #C69F7F;
+  --color-pill-active-text: #1A1512;
+  --glass-bg: rgba(44, 36, 31, 0.6);
+  --glass-border: rgba(198, 159, 127, 0.2);
+  --card-bg: rgba(44, 36, 31, 0.7);
+  --card-border: rgba(198, 159, 127, 0.15);
+}
+
+[data-theme='galaxy'] {
+  --color-primary: #818CF8;
+  --color-primary-rgb: 129, 140, 248;
+  --color-bg-page: #0F172A;
+  --color-bg-surface: #1E293B;
+  --color-border: #312E81;
+  --color-text-primary: #E0E7FF;
+  --color-text-secondary: #A5B4FC;
+  --color-text-disabled: #6366F1;
+  --color-sidebar-user-card-bg: rgba(49, 46, 129, 0.4);
+  --color-nav-active-bg: #312E81;
+  --color-nav-active-text: #E0E7FF;
+  --color-pill-bg: rgba(49, 46, 129, 0.3);
+  --color-pill-active-bg: #818CF8;
+  --glass-bg: rgba(30, 27, 75, 0.6);
+  --glass-border: rgba(129, 140, 248, 0.2);
+  --glass-blur: 24px;
+  --card-bg: rgba(30, 27, 75, 0.7);
+  --card-border: rgba(129, 140, 248, 0.15);
+}
+
+[data-theme='teal-waters'] {
+  --color-primary: #2DD4BF;
+  --color-primary-rgb: 45, 212, 191;
+  --color-bg-page: #042F2E;
+  --color-bg-surface: #115E59;
+  --color-border: #134E4A;
+  --color-text-primary: #CCFBF1;
+  --color-text-secondary: #5EEAD4;
+  --color-text-disabled: #2DD4BF;
+  --color-sidebar-user-card-bg: rgba(19, 78, 74, 0.5);
+  --color-nav-active-bg: #134E4A;
+  --color-nav-active-text: #CCFBF1;
+  --color-pill-bg: rgba(19, 78, 74, 0.4);
+  --color-pill-active-bg: #2DD4BF;
+  --color-pill-active-text: #042F2E;
+  --glass-bg: rgba(4, 47, 46, 0.6);
+  --glass-border: rgba(45, 212, 191, 0.2);
+  --card-bg: rgba(4, 47, 46, 0.7);
+  --card-border: rgba(45, 212, 191, 0.15);
+}
+
+[data-theme='sunset-drive'] {
+  --color-primary: #F472B6;
+  --color-primary-rgb: 244, 114, 182;
+  --color-secondary-success: #34D399;
+  --color-secondary-warning: #FBBF24;
+  --color-secondary-danger: #F87171;
+  --color-secondary-info: #60A5FA;
+  --color-bg-page: #4C1D95;
+  --color-bg-surface: #5B21B6;
+  --color-border: #6D28D9;
+  --color-text-primary: #FDF4FF;
+  --color-text-secondary: #E9D5FF;
+  --color-text-disabled: #A78BFA;
+  --color-sidebar-user-card-bg: rgba(91, 33, 182, 0.5);
+  --color-nav-active-bg: #6D28D9;
+  --color-nav-active-text: #FDF4FF;
+  --color-pill-bg: rgba(91, 33, 182, 0.4);
+  --color-pill-active-bg: #F472B6;
+  --color-pill-active-text: #4C1D95;
+  --glass-bg: rgba(76, 29, 149, 0.6);
+  --glass-border: rgba(244, 114, 182, 0.25);
+  --glass-blur: 24px;
+  --card-bg: rgba(76, 29, 149, 0.7);
+  --card-border: rgba(244, 114, 182, 0.2);
+}
+
+[data-theme='midnight-pro'] {
+  --color-primary: #38BDF8;
+  --color-primary-rgb: 56, 189, 248;
+  --color-bg-page: #020617;
+  --color-bg-surface: #0F172A;
+  --color-border: #1E293B;
+  --color-sidebar-user-card-bg: rgba(15, 23, 42, 0.8);
+  --color-nav-active-bg: #38BDF8;
+  --color-nav-active-text: #020617;
+  --color-pill-bg: rgba(15, 23, 42, 0.8);
+  --color-pill-active-bg: #38BDF8;
+  --color-pill-active-text: #020617;
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --glass-border: rgba(56, 189, 248, 0.15);
+  --glass-blur: 16px;
+  --card-bg: rgba(15, 23, 42, 0.8);
+  --card-border: rgba(56, 189, 248, 0.1);
+  --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* ==========================================================================
+   玫瑰金主题 (Rose Gold) - 浅色模式
+   适用于: 奢华优雅玫瑰金风格
+   ========================================================================== */
+[data-theme='rose-gold'] {
+  /* 1. 基础颜色 */
+  --color-primary: #E11D48;               /* 玫瑰红 */
+  --color-primary-rgb: 225, 29, 72;
+  
+  --color-secondary-success: #10B981;
+  --color-secondary-warning: #F59E0B;
+  --color-secondary-danger: #EF4444;
+  --color-secondary-info: #3B82F6;
+
+  /* 2. 背景与表面 */
+  --color-bg-page: #FFF0F3;               /* 浅粉白 */
+  --color-bg-surface: #FFFFFF;            /* 纯白 */
+  
+  --color-border: #FFE4E6;
+
+  /* 3. 文字排版 */
+  --color-text-primary: #881337;          /* 深玫瑰红 */
+  --color-text-secondary: #BE123C;        /* 玫瑰红 */
+  --color-text-disabled: #FDA4AF;
+
+  /* 4. 组件特定 */
+  --color-sidebar-user-card-bg: #FFE4E6;
+  
+  --color-nav-active-bg: #FFE4E6;
+  --color-nav-active-text: #881337;
+
+  --color-pill-bg: #FFF0F3;
+  --color-pill-active-bg: #E11D48;
+  --color-pill-active-text: #FFFFFF;
+
+  /* 5. 玻璃拟态 */
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(225, 29, 72, 0.2);
+  --glass-shadow: 0 8px 32px 0 rgba(225, 29, 72, 0.1);
+  --glass-blur: 20px;
+  
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --card-border: rgba(225, 29, 72, 0.15);
+  --card-shadow: 0 8px 32px 0 rgba(225, 29, 72, 0.08);
+}
+
+/* ==========================================================================
+   深渊蓝主题 (Abyssal Blue) - 深色模式
+   适用于: 极致深沉静谧深渊
+   ========================================================================== */
+[data-theme='abyssal-blue'] {
+  /* 1. 基础颜色 */
+  --color-primary: #00D2FF;               /* 电光蓝 */
+  --color-primary-rgb: 0, 210, 255;
+  
+  /* 2. 背景与表面 */
+  --color-bg-page: #000428;               /* 深渊黑蓝 */
+  --color-bg-surface: #004e92;            /* 深海蓝 */
+  
+  --color-border: #002b5e;
+
+  /* 3. 文字排版 */
+  --color-text-primary: #E0F2FE;
+  --color-text-secondary: #7DD3FC;
+  --color-text-disabled: #0369A1;
+
+  /* 4. 组件特定 */
+  --color-sidebar-user-card-bg: rgba(0, 78, 146, 0.5);
+  
+  --color-nav-active-bg: #004e92;
+  --color-nav-active-text: #E0F2FE;
+
+  --color-pill-bg: rgba(0, 78, 146, 0.4);
+  --color-pill-active-bg: #00D2FF;
+  --color-pill-active-text: #000428;
+
+  /* 5. 玻璃拟态 */
+  --glass-bg: rgba(0, 4, 40, 0.7);
+  --glass-border: rgba(0, 210, 255, 0.2);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  --glass-blur: 20px;
+  
+  --card-bg: rgba(0, 4, 40, 0.8);
+  --card-border: rgba(0, 210, 255, 0.15);
+  --card-shadow: 0 8px 32px 0 rgba(0, 210, 255, 0.1);
+}
+
+/* ==========================================================================
+   复古羊皮纸主题 (Vintage Paper) - 浅色模式
+   适用于: 怀旧温暖纸质风格
+   ========================================================================== */
+[data-theme='vintage-paper'] {
+  --color-primary: #8D6E63;
+  --color-primary-rgb: 141, 110, 99;
+  --color-bg-page: #F5E8D3;
+  --color-bg-surface: #FDF9F1;
+  --color-border: #E6D5B8;
+  --color-text-primary: #3E2723;
+  --color-text-secondary: #5D4037;
+  --color-text-disabled: #8D6E63;
+  --color-sidebar-user-card-bg: rgba(253, 249, 241, 0.8);
+  --color-nav-active-bg: #8D6E63;
+  --color-nav-active-text: #FDF9F1;
+  --color-pill-bg: rgba(141, 110, 99, 0.1);
+  --color-pill-active-bg: #8D6E63;
+  --color-pill-active-text: #FDF9F1;
+  --glass-bg: rgba(253, 249, 241, 0.7);
+  --glass-border: rgba(141, 110, 99, 0.15);
+  --card-bg: rgba(253, 249, 241, 0.85);
+  --card-border: rgba(141, 110, 99, 0.1);
+}
+
+/* ==========================================================================
+   iOS 风格主题 (Light & Dark)
+   ========================================================================== */
+[data-theme='ios-style'] {
+  --color-primary: #007AFF; /* Apple Blue */
+  --color-primary-rgb: 0, 122, 255;
+  --color-bg-page: #F2F2F7; /* iOS system group background */
+  --color-bg-surface: #FFFFFF; /* Card background */
+  --color-border: #C6C6C8; /* System separator */
+  --color-text-primary: #000000;
+  --color-text-secondary: #8E8E93;
+  --color-text-disabled: #C7C7CC;
+  --color-sidebar-user-card-bg: rgba(255, 255, 255, 0.7);
+  --color-nav-active-bg: #007AFF;
+  --color-nav-active-text: #FFFFFF;
+  --color-pill-bg: rgba(142, 142, 147, 0.12); /* Subtle pill bg */
+  --color-pill-active-bg: #007AFF;
+  --color-pill-active-text: #FFFFFF;
+  --glass-bg: rgba(255, 255, 255, 0.75); /* Translucent white */
+  --glass-border: rgba(0, 0, 0, 0.05); /* Very subtle border */
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --card-border: rgba(0, 0, 0, 0.05);
+  --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme='ios-dark'] {
+  --color-primary: #0A84FF; /* Apple Blue Dark */
+  --color-primary-rgb: 10, 132, 255;
+  --color-bg-page: #000000;
+  --color-bg-surface: #1C1C1E; /* iOS dark elevated */
+  --color-border: #38383A;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #EBEBF5; /* iOS secondary label dark */
+  --color-text-disabled: #505053;
+  --color-sidebar-user-card-bg: rgba(28, 28, 30, 0.7);
+  --color-nav-active-bg: #0A84FF;
+  --color-nav-active-text: #FFFFFF;
+  --color-pill-bg: rgba(118, 118, 128, 0.24);
+  --color-pill-active-bg: #0A84FF;
+  --color-pill-active-text: #FFFFFF;
+  --glass-bg: rgba(28, 28, 30, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --card-bg: rgba(28, 28, 30, 0.85);
+  --card-border: rgba(255, 255, 255, 0.05);
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   创意先锋主题 (Creative & Unique)
+   ========================================================================== */
+
+/* 1. 合成器浪潮 (Synthwave) - 80s复古未来主义 */
+[data-theme='synthwave'] {
+  --color-primary: #00f0ff; /* 霓虹青 */
+  --color-primary-rgb: 0, 240, 255;
+  --color-secondary-success: #ff00ff; /* 霓虹粉替代成功色，增加冲突感 */
+  --color-bg-page: #0d0221;
+  --color-bg-surface: #261447;
+  --color-border: #ff3864; /* 霓虹红边框 */
+  --color-text-primary: #f9f6ff;
+  --color-text-secondary: #b3a0e5;
+  --color-sidebar-user-card-bg: rgba(38, 20, 71, 0.8);
+  --color-nav-active-bg: #ff00ff; /* 导航高亮用粉色 */
+  --color-nav-active-text: #000000;
+  --color-pill-bg: rgba(255, 0, 255, 0.2);
+  --color-pill-active-bg: #00f0ff;
+  --color-pill-active-text: #000000;
+  --glass-bg: rgba(13, 2, 33, 0.6);
+  --glass-border: rgba(0, 240, 255, 0.4);
+  --glass-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+  --card-bg: linear-gradient(180deg, rgba(38, 20, 71, 0.9) 0%, rgba(13, 2, 33, 0.95) 100%);
+  --card-border: rgba(255, 56, 100, 0.5);
+  --card-shadow: 0 8px 32px rgba(255, 0, 255, 0.15);
+}
+
+/* 2. 全息玻璃态 (Holographic Glass) - 极高通透感与流光溢彩 */
+[data-theme='glass-morphism-pro'] {
+  --color-primary: #a18cd1;
+  --color-primary-rgb: 161, 140, 209;
+  --color-bg-page: #fdfbfb;
+  --color-bg-surface: rgba(255, 255, 255, 0.4); /* 极高透明度 */
+  --color-border: rgba(255, 255, 255, 0.6);
+  --color-text-primary: #2d3436;
+  --color-text-secondary: #636e72;
+  --color-sidebar-user-card-bg: rgba(255, 255, 255, 0.3);
+  --color-nav-active-bg: linear-gradient(120deg, #a18cd1 0%, #fbc2eb 100%);
+  --color-nav-active-text: #ffffff;
+  --color-pill-bg: rgba(255, 255, 255, 0.5);
+  --color-pill-active-bg: #a18cd1;
+  --color-pill-active-text: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.25);
+  --glass-border: rgba(255, 255, 255, 0.8);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  --glass-blur: 30px; /* 极强模糊 */
+  --card-bg: rgba(255, 255, 255, 0.35);
+  --card-border: rgba(255, 255, 255, 0.7);
+  --card-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* 3. 粗野主义 (Brutalism) - 反叛设计，大色块，高对比，硬边框 */
+[data-theme='monochrome-brutalism'] {
+  --color-primary: #ff0000; /* 极致红 */
+  --color-primary-rgb: 255, 0, 0;
+  --color-bg-page: #e0e0e0;
+  --color-bg-surface: #ffffff;
+  --color-border: #000000; /* 纯黑硬边框 */
+  --color-text-primary: #000000;
+  --color-text-secondary: #333333;
+  --color-sidebar-user-card-bg: #ffffff;
+  --color-nav-active-bg: #000000;
+  --color-nav-active-text: #ffffff;
+  --color-pill-bg: #ffffff;
+  --color-pill-active-bg: #ff0000;
+  --color-pill-active-text: #ffffff;
+  --glass-bg: #ffffff; /* 放弃玻璃效果，改为纯色实体 */
+  --glass-border: #000000;
+  --glass-shadow: 8px 8px 0px 0px #000000; /* 实体硬阴影 */
+  --glass-blur: 0px;
+  --card-bg: #ffffff;
+  --card-border: #000000;
+  --card-shadow: 6px 6px 0px 0px #000000; /* 标志性的硬边缘阴影 */
+}
+
+/* 3. Kuroha 线稿 (Anime Lineart Video) */
+[data-theme='anime-lineart'] {
+  --color-primary: #333333; /* 墨黑 */
+  --color-primary-rgb: 51, 51, 51;
+  --color-bg-page: #ffffff;
+  --color-bg-surface: rgba(255, 255, 255, 0.9);
+  --color-border: #999999;
+  --color-text-primary: #000000;
+  --color-text-secondary: #000000;
+  --color-sidebar-user-card-bg: rgba(255, 255, 255, 0.95);
+  --color-nav-active-bg: #333333;
+  --color-nav-active-text: #ffffff;
+  --color-pill-bg: rgba(255, 255, 255, 0.95);
+  --color-pill-active-bg: #333333;
+  --color-pill-active-text: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(0, 0, 0, 0.2);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+  --glass-blur: 10px;
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --card-border: rgba(0, 0, 0, 0.1);
+  --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* 4. 水墨武士 (Ink Samurai Video) */
+[data-theme='ink-samurai'] {
+  --color-primary: #2c3e50; /* 墨蓝 */
+  --color-primary-rgb: 44, 62, 80;
+  --color-bg-page: #f5f5f5; /* 宣纸白 */
+  --color-bg-surface: rgba(255, 255, 255, 0.9);
+  --color-border: #999999;
+  --color-text-primary: #000000;
+  --color-text-secondary: #000000;
+  --color-sidebar-user-card-bg: rgba(255, 255, 255, 0.95);
+  --color-nav-active-bg: #2c3e50;
+  --color-nav-active-text: #ffffff;
+  --color-pill-bg: rgba(255, 255, 255, 0.95);
+  --color-pill-active-bg: #2c3e50;
+  --color-pill-active-text: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.9); /* 提高不透明度 */
+  --glass-border: rgba(44, 62, 80, 0.2);
+  --glass-shadow: 0 8px 32px 0 rgba(44, 62, 80, 0.1);
+  --glass-blur: 10px;
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --card-border: rgba(44, 62, 80, 0.1);
+  --card-shadow: 0 4px 20px rgba(44, 62, 80, 0.08);
+}
+
+/* 5. 二次元少女 (Anime Girl Video) */
+[data-theme='anime-girl'] {
+  --color-primary: #EAB308; /* Yellow */
+  --color-primary-rgb: 234, 179, 8;
+  --color-bg-page: #FEFCE8; /* Yellow 50 */
+  --color-bg-surface: rgba(255, 255, 255, 0.9);
+  --color-border: #FEF08A;
+  --color-text-primary: #422006;
+  --color-text-secondary: #713F12;
+  --color-text-disabled: #CA8A04;
+  --color-sidebar-user-card-bg: rgba(255, 255, 255, 0.95);
+  --color-nav-active-bg: #EAB308;
+  --color-nav-active-text: #ffffff;
+  --color-pill-bg: rgba(255, 255, 255, 0.95);
+  --color-pill-active-bg: #EAB308;
+  --color-pill-active-text: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(234, 179, 8, 0.2);
+  --glass-shadow: 0 8px 32px 0 rgba(234, 179, 8, 0.1);
+  --glass-blur: 10px;
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --card-border: rgba(234, 179, 8, 0.15);
+  --card-shadow: 0 4px 15px rgba(234, 179, 8, 0.1);
+}
+
+/* 6. 星空之夜 (Starry Night Video) */
+[data-theme='starry-night'] {
+  --color-primary: #6366f1; /* 靛蓝 */
+  --color-primary-rgb: 99, 102, 241;
+  --color-bg-page: #0f172a; /* 深蓝黑 */
+  --color-bg-surface: rgba(30, 41, 59, 0.8);
+  --color-border: #334155;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #cbd5e1;
+  --color-text-disabled: #64748b;
+  --color-sidebar-user-card-bg: rgba(30, 41, 59, 0.9);
+  --color-nav-active-bg: #6366f1;
+  --color-nav-active-text: #ffffff;
+  --color-pill-bg: rgba(30, 41, 59, 0.9);
+  --color-pill-active-bg: #6366f1;
+  --color-pill-active-text: #ffffff;
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --glass-border: rgba(99, 102, 241, 0.3);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  --glass-blur: 12px;
+  --card-bg: rgba(30, 41, 59, 0.7);
+  --card-border: rgba(99, 102, 241, 0.2);
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* 7. 幻光魅影 (Anime Glow Video) */
+[data-theme='anime-glow'] {
+  --color-primary: #3b82f6; /* 亮蓝 */
+  --color-primary-rgb: 59, 130, 246;
+  --color-bg-page: #0f172a; /* 深蓝黑背景 */
+  --color-bg-surface: rgba(30, 41, 59, 0.8);
+  --color-border: #1e40af;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #93c5fd;
+  --color-text-disabled: #60a5fa;
+  --color-sidebar-user-card-bg: rgba(30, 41, 59, 0.9);
+  --color-nav-active-bg: #3b82f6;
+  --color-nav-active-text: #ffffff;
+  --color-pill-bg: rgba(30, 41, 59, 0.9);
+  --color-pill-active-bg: #3b82f6;
+  --color-pill-active-text: #ffffff;
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --glass-border: rgba(59, 130, 246, 0.3);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  --glass-blur: 10px;
+  --card-bg: rgba(30, 41, 59, 0.75);
+  --card-border: rgba(59, 130, 246, 0.2);
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* ==========================================================================
+   浅色主题
+   ========================================================================== */
+[data-theme='purple'] {
+  --color-primary: #6C5DD3;
+  --color-primary-rgb: 108, 93, 211;
+  --color-secondary-success: #45B36B;
+  --color-secondary-warning: #FFAD33;
+  --color-secondary-danger: #EF466F;
+  --color-secondary-info: #3E8BFF;
+  --color-bg-page: #F7F8FC;
+  --color-bg-surface: #FFFFFF;
+  --color-border: #E4E8F0;
+  --color-text-primary: #11142D;
+  --color-text-secondary: #808191;
+  --color-text-disabled: #B2B3BD;
+  --color-sidebar-user-card-bg: #F0F2F5;
+  --color-nav-active-bg: #6C5DD3;
+  --color-nav-active-text: #FFFFFF;
+  --color-pill-bg: #F0F2F5;
+  --color-pill-active-bg: #6C5DD3;
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.8);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  --card-bg: rgba(255, 255, 255, 0.6);
+  --card-border: rgba(255, 255, 255, 0.7);
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+[data-theme='sakura'] {
+  --color-primary: #FF69B4;
+  --color-primary-rgb: 255, 105, 180;
+  --color-bg-page: #FFF5F7;
+  --color-bg-surface: #FFFFFF;
+  --color-border: #FFD1DC;
+  --color-text-primary: #4A4A4A;
+  --color-text-secondary: #8E8E8E;
+  --color-sidebar-user-card-bg: #FFE4E9;
+  --color-nav-active-bg: #FF69B4;
+  --color-nav-active-text: #FFFFFF;
+  --color-pill-bg: #FFE4E9;
+  --color-pill-active-bg: #FF69B4;
+  --color-pill-active-text: #FFFFFF;
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(255, 105, 180, 0.2);
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --card-border: rgba(255, 105, 180, 0.15);
+}
+
+[data-theme='yellow'] {
+  --color-primary: #F59E0B;
+  --color-primary-rgb: 245, 158, 11;
+  --color-bg-page: #FFFBEB;
+  --color-bg-surface: #FFFFFF;
+  --color-border: #FDE68A;
+  --color-text-primary: #451A03;
+  --color-text-secondary: #92400E;
+  --color-sidebar-user-card-bg: #FEF3C7;
+  --color-nav-active-bg: #F59E0B;
+  --color-nav-active-text: #FFFFFF;
+  --color-pill-bg: #FEF3C7;
+  --color-pill-active-bg: #F59E0B;
+  --color-pill-active-text: #FFFFFF;
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(245, 158, 11, 0.2);
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --card-border: rgba(245, 158, 11, 0.15);
+}
+
+[data-theme='green'] {
+  --color-primary: #059669;
+  --color-primary-rgb: 5, 150, 105;
+  --color-bg-page: #F0FDF4;
+  --color-bg-surface: #FFFFFF;
+  --color-border: #BBF7D0;
+  --color-text-primary: #064E3B;
+  --color-text-secondary: #047857;
+  --color-sidebar-user-card-bg: #D1FAE5;
+  --color-nav-active-bg: #059669;
+  --color-nav-active-text: #FFFFFF;
+  --color-pill-bg: #D1FAE5;
+  --color-pill-active-bg: #059669;
+  --color-pill-active-text: #FFFFFF;
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(5, 150, 105, 0.2);
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --card-border: rgba(5, 150, 105, 0.15);
+}
+
+[data-theme='red'] {
+  --color-primary: #E11D48;
+  --color-primary-rgb: 225, 29, 72;
+  --color-bg-page: #FFF1F2;
+  --color-bg-surface: #FFFFFF;
+  --color-border: #FECDD3;
+  --color-text-primary: #881337;
+  --color-text-secondary: #BE123C;
+  --color-sidebar-user-card-bg: #FFE4E6;
+  --color-nav-active-bg: #E11D48;
+  --color-nav-active-text: #FFFFFF;
+  --color-pill-bg: #FFE4E6;
+  --color-pill-active-bg: #E11D48;
+  --color-pill-active-text: #FFFFFF;
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(225, 29, 72, 0.2);
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --card-border: rgba(225, 29, 72, 0.15);
+}
+
+[data-theme='orange'] {
+  --color-primary: #F97316;
+  --color-primary-rgb: 249, 115, 22;
+  --color-bg-page: #FFF7ED;
+  --color-bg-surface: #FFFFFF;
+  --color-border: #FED7AA;
+  --color-text-primary: #7C2D12;
+  --color-text-secondary: #C2410C;
+  --color-sidebar-user-card-bg: #FFEDD5;
+  --color-nav-active-bg: #F97316;
+  --color-nav-active-text: #FFFFFF;
+  --color-pill-bg: #FFEDD5;
+  --color-pill-active-bg: #F97316;
+  --color-pill-active-text: #FFFFFF;
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(249, 115, 22, 0.2);
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --card-border: rgba(249, 115, 22, 0.15);
+}
+
+[data-theme='lightblue'] {
+  --color-primary: #0EA5E9;
+  --color-primary-rgb: 14, 165, 233;
+  --color-bg-page: #F0F9FF;
+  --color-bg-surface: #FFFFFF;
+  --color-border: #BAE6FD;
+  --color-text-primary: #0C4A6E;
+  --color-text-secondary: #0284C7;
+  --color-sidebar-user-card-bg: #E0F2FE;
+  --color-nav-active-bg: #0EA5E9;
+  --color-nav-active-text: #FFFFFF;
+  --color-pill-bg: #E0F2FE;
+  --color-pill-active-bg: #0EA5E9;
+  --color-pill-active-text: #FFFFFF;
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(14, 165, 233, 0.2);
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --card-border: rgba(14, 165, 233, 0.15);
+}
+
+[data-theme='white'] {
+  --color-primary: #171717;
+  --color-primary-rgb: 23, 23, 23;
+  --color-bg-page: #F9FAFB;
+  --color-bg-surface: #FFFFFF;
+  --color-border: #E5E7EB;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6B7280;
+  --color-sidebar-user-card-bg: #F3F4F6;
+  --color-nav-active-bg: #171717;
+  --color-nav-active-text: #FFFFFF;
+  --color-pill-bg: #F3F4F6;
+  --color-pill-active-bg: #171717;
+  --color-pill-active-text: #FFFFFF;
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.05);
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --card-border: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='rainbow'] {
+  --color-primary: #D946EF;
+  --color-primary-rgb: 217, 70, 239;
+  --color-secondary-success: #10B981;
+  --color-secondary-warning: #F59E0B;
+  --color-secondary-danger: #EF4444;
+  --color-secondary-info: #3B82F6;
+  --color-bg-page: #FAF5FF;
+  --color-bg-surface: #FFFFFF;
+  --color-border: #E9D5FF;
+  --color-text-primary: #4C1D95;
+  --color-text-secondary: #7C3AED;
+  --color-sidebar-user-card-bg: #F3E8FF;
+  --color-nav-active-bg: #E9D5FF;
+  --color-nav-active-text: #4C1D95;
+  --color-pill-bg: #F3E8FF;
+  --color-pill-active-bg: #D946EF;
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(217, 70, 239, 0.25);
+  --glass-blur: 24px;
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --card-border: rgba(217, 70, 239, 0.2);
+}
+
+[data-theme='mint-ice'] {
+  --color-primary: #00D9C0;
+  --color-primary-rgb: 0, 217, 192;
+  --color-secondary-success: #00E676;
+  --color-secondary-warning: #FFB74D;
+  --color-secondary-warning-rgb: 255, 183, 77;
+  --color-secondary-danger: #FF5252;
+  --color-secondary-info: #40C4FF;
+  --color-bg-page: #F0FFFF;
+  --color-bg-surface: #FFFFFF;
+  --color-border: #B2DFDB;
+  --color-text-primary: #004D40;
+  --color-text-secondary: #00796B;
+  --color-text-disabled: #80CBC4;
+  --color-sidebar-user-card-bg: #E0F2F1;
+  --color-nav-active-bg: #B2DFDB;
+  --color-nav-active-text: #004D40;
+  --color-pill-bg: #E0F2F1;
+  --color-pill-active-bg: #B2DFDB;
+  --color-pill-active-text: #004D40;
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(0, 217, 192, 0.25);
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --card-border: rgba(0, 217, 192, 0.2);
+}
+
+[data-theme='peach-fuzz'] {
+  --color-primary: #FFBE98;
+  --color-primary-rgb: 255, 190, 152;
+  --color-secondary-success: #86EFAC;
+  --color-secondary-warning: #FDBA74;
+  --color-secondary-danger: #FDA4AF;
+  --color-secondary-info: #93C5FD;
+  --color-bg-page: #FFF7ED;
+  --color-bg-surface: #FFFFFF;
+  --color-border: #FFEDD5;
+  --color-text-primary: #7C2D12;
+  --color-text-secondary: #9A3412;
+  --color-text-disabled: #FDBA74;
+  --color-sidebar-user-card-bg: #FFEDD5;
+  --color-nav-active-bg: #FFEDD5;
+  --color-nav-active-text: #7C2D12;
+  --color-pill-bg: #FFF7ED;
+  --color-pill-active-bg: #FFBE98;
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(255, 190, 152, 0.3);
+  --card-bg: rgba(255, 255, 255, 0.75);
+  --card-border: rgba(255, 190, 152, 0.25);
+}
+
+[data-theme='matcha-zen'] {
+  --color-primary: #65A30D;
+  --color-primary-rgb: 101, 163, 13;
+  --color-secondary-success: #16A34A;
+  --color-secondary-warning: #D97706;
+  --color-secondary-danger: #DC2626;
+  --color-secondary-info: #0284C7;
+  --color-bg-page: #ECFCCB;
+  --color-bg-surface: #FFFFFF;
+  --color-border: #D9F99D;
+  --color-text-primary: #365314;
+  --color-text-secondary: #4D7C0F;
+  --color-text-disabled: #84CC16;
+  --color-sidebar-user-card-bg: #D9F99D;
+  --color-nav-active-bg: #D9F99D;
+  --color-nav-active-text: #365314;
+  --color-pill-bg: #F7FEE7;
+  --color-pill-active-bg: #65A30D;
+  --glass-bg: rgba(255, 255, 255, 0.5);
+  --glass-border: rgba(101, 163, 13, 0.2);
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --card-border: rgba(101, 163, 13, 0.15);
+}
+
+/* 8. 山林海岸 (Mountain Coast Video) */
+[data-theme='mountain-coast'] {
+  --color-primary: #0d9488; /* Teal */
+  --color-primary-rgb: 13, 148, 136;
+  --color-bg-page: #0f172a; /* Dark Blue-Grey */
+  --color-bg-surface: rgba(15, 23, 42, 0.8);
+  --color-border: #134e4a;
+  --color-text-primary: #f0fdf4;
+  --color-text-secondary: #ccfbf1;
+  --color-text-disabled: #5eead4;
+  --color-sidebar-user-card-bg: rgba(15, 23, 42, 0.9);
+  --color-nav-active-bg: #0d9488;
+  --color-nav-active-text: #ffffff;
+  --color-pill-bg: rgba(15, 23, 42, 0.9);
+  --color-pill-active-bg: #0d9488;
+  --color-pill-active-text: #ffffff;
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --glass-border: rgba(13, 148, 136, 0.3);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  --glass-blur: 10px;
+  --card-bg: rgba(15, 23, 42, 0.75);
+  --card-border: rgba(13, 148, 136, 0.2);
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* 9. Windows 绯红 (Windows Crimson) */
+[data-theme='windows-red'] {
+  --theme-wallpaper: url('/images/wallpapers/windows-red-abstract.png') center/100% 100% no-repeat fixed;
+  --color-primary: #ef4444; /* Red 500 */
+  --color-primary-rgb: 239, 68, 68;
+  --color-bg-page: #0f172a; /* Slate 900 */
+  --color-bg-surface: rgba(15, 23, 42, 0.8);
+  --color-border: #7f1d1d; /* Red 900 */
+  --color-text-primary: #fef2f2; /* Red 50 */
+  --color-text-secondary: #fca5a5; /* Red 300 */
+  --color-text-disabled: #f87171; /* Red 400 */
+  --color-sidebar-user-card-bg: rgba(15, 23, 42, 0.9);
+  --color-nav-active-bg: #ef4444;
+  --color-nav-active-text: #ffffff;
+  --color-pill-bg: rgba(15, 23, 42, 0.9);
+  --color-pill-active-bg: #ef4444;
+  --color-pill-active-text: #ffffff;
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --glass-border: rgba(239, 68, 68, 0.3);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  --glass-blur: 10px;
+  --card-bg: rgba(15, 23, 42, 0.75);
+  --card-border: rgba(239, 68, 68, 0.2);
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* 10. Bliss Breach · 火猫 */
+[data-theme='bliss-breach'] {
+  --theme-wallpaper: url('/images/wallpapers/windows-firecat.png') center/cover no-repeat fixed;
+  --color-primary: #2EA3FF; /* Sky Blue */
+  --color-primary-rgb: 46, 163, 255;
+  --color-secondary-success: #66A53A; /* Grass Green */
+  --color-secondary-warning: #FF7A00; /* Flame Orange */
+  --color-secondary-danger: #FF4500;
+  
+  --color-bg-page: #F0F9FF; /* Light Sky */
+  --color-bg-surface: rgba(255, 255, 255, 0.6);
+  --color-border: rgba(255, 255, 255, 0.8);
+  
+  --color-text-primary: #1F1F1F; /* Charcoal */
+  --color-text-secondary: #475569;
+  --color-text-disabled: #94a3b8;
+  
+  --color-sidebar-user-card-bg: rgba(255, 255, 255, 0.7);
+  --color-nav-active-bg: #2EA3FF;
+  --color-nav-active-text: #FFFFFF;
+  
+  --color-pill-bg: rgba(255, 255, 255, 0.7);
+  --color-pill-active-bg: #2EA3FF;
+  --color-pill-active-text: #FFFFFF;
+  
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+  --glass-blur: 15px;
+  
+  --card-bg: rgba(255, 255, 255, 0.55);
+  --card-border: rgba(255, 255, 255, 0.7);
+  --card-shadow: 0 8px 32px rgba(46, 163, 255, 0.1);
+}

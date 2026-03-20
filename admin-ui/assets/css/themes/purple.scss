@@ -1,0 +1,68 @@
+// 颜色系统 (Color System)
+$color-primary: #6C5DD3;
+$color-secondary-success: #4AD991;
+$color-secondary-warning: #FF9F43;
+$color-secondary-danger: #FF5B5B;
+$color-secondary-info: #2D9CDB;
+
+$color-bg-page: #F7F8FC;
+$color-bg-surface: #FFFFFF;
+
+$color-text-primary: #1B1B1B;
+$color-text-secondary: #808191;
+$color-text-disabled: #B2B3BD;
+
+$color-border: #E4E4E4; // 自定义边框色，用于分割线等
+
+// 排版系统 (Typography)
+$font-family-base: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+$font-size-base: 14px;
+$font-weight-regular: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// 组件规范 (Component Specs)
+$border-radius-card: 20px;
+$padding-card: 24px;
+$shadow-card: 0 4px 6px rgba(0, 0, 0, 0.05);
+
+// 玻璃拟态 (Glassmorphism)
+@mixin glass-effect($opacity: 0.45, $blur: 20px) {
+  background: rgba(255, 255, 255, $opacity);
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+}
+
+@mixin glass-card {
+  @include glass-effect;
+  border-radius: $border-radius-card;
+  /* Hardware acceleration & Optimization */
+  transform: translateZ(0);
+  will-change: transform;
+  contain: layout style;
+}
+
+@mixin glass-button($bg-opacity: 0.5, $hover-opacity: 0.8) {
+  color: $color-text-secondary;
+  background-color: rgba(255, 255, 255, $bg-opacity);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: none;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    color: $color-text-primary;
+    background-color: rgba(255, 255, 255, $hover-opacity);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+}
+
+$sidebar-width: 250px;
+$header-height: 80px;

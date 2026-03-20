@@ -1,0 +1,399 @@
+// Element UI 组件样式覆盖 - 玻璃拟态风格
+
+// 下拉菜单
+.el-dropdown-menu {
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  box-shadow: var(--card-shadow) !important;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  padding: 8px 0 !important;
+  border-radius: 12px !important;
+
+  .el-dropdown-menu__item {
+    color: var(--color-text-primary) !important;
+    font-size: 14px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    margin: 0 6px;
+
+    &:hover, &:focus {
+      background-color: rgba(var(--color-primary-rgb), 0.15) !important;
+      color: #fff !important;
+    }
+
+    &.el-dropdown-menu__item--divided {
+      border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+      margin-top: 8px;
+      padding-top: 12px;
+      
+      &::before {
+        display: none; // 移除默认的分割线样式
+      }
+    }
+
+    i {
+      margin-right: 0; 
+      font-size: 18px;
+      opacity: 0.8;
+    }
+  }
+
+  // 箭头样式修复
+  &.el-popper .popper__arrow {
+    border-bottom-color: var(--card-border) !important;
+    
+    &::after {
+      border-bottom-color: var(--card-bg) !important;
+    }
+  }
+}
+
+// 输入框
+.el-input {
+  .el-input__inner {
+    background-color: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    color: var(--color-text-primary) !important;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+
+    &::placeholder {
+      color: var(--color-text-secondary) !important;
+    }
+
+    &:hover {
+      border-color: rgba(var(--color-primary-rgb), 0.5) !important;
+    }
+
+    &:focus {
+      border-color: var(--color-primary) !important;
+      box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
+    }
+  }
+
+  .el-input__prefix, .el-input__suffix {
+    color: var(--color-text-secondary);
+  }
+}
+
+// 选择器下拉框
+.el-select-dropdown {
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  box-shadow: var(--card-shadow) !important;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+
+  .el-select-dropdown__item {
+    color: var(--color-text-primary);
+    
+    &.hover, &:hover {
+      background-color: rgba(var(--color-primary-rgb), 0.1);
+    }
+
+    &.selected {
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+  }
+
+  &.el-popper .popper__arrow {
+    border-bottom-color: var(--card-border) !important;
+    
+    &::after {
+      border-bottom-color: var(--card-bg) !important;
+    }
+  }
+}
+
+// 分页器
+.el-pagination {
+  .btn-prev, .btn-next {
+    background-color: var(--glass-bg) !important;
+    color: var(--color-text-primary) !important;
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    min-width: 32px;
+    height: 32px;
+    line-height: 32px;
+    margin: 0 4px;
+    
+    &:disabled {
+      color: var(--color-text-disabled) !important;
+      background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+  }
+
+  .el-pager li {
+    background-color: var(--glass-bg) !important;
+    color: var(--color-text-primary) !important;
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    min-width: 32px;
+    height: 32px;
+    line-height: 32px;
+    margin: 0 4px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+
+    &:hover {
+      color: var(--color-primary) !important;
+      border-color: var(--color-primary);
+    }
+
+    &.active {
+      background-color: var(--color-primary) !important;
+      color: #fff !important;
+      border-color: var(--color-primary);
+      box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.3);
+    }
+  }
+
+  // 分页跳转输入框
+  .el-pagination__jump {
+    color: var(--color-text-secondary) !important;
+    margin-left: 16px;
+
+    .el-input__inner {
+      background-color: var(--glass-bg) !important;
+      border: 1px solid var(--glass-border) !important;
+      color: var(--color-text-primary) !important;
+      border-radius: 6px;
+      height: 32px;
+      line-height: 32px;
+      
+      &:focus {
+        border-color: var(--color-primary) !important;
+      }
+    }
+  }
+
+  // 总数文本
+  .el-pagination__total {
+    color: var(--color-text-secondary) !important;
+    margin-right: 16px;
+  }
+}
+
+// 消息提示 - 玻璃拟态风格
+.el-message.glass-message {
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  padding: 12px 24px;
+  border-radius: 12px;
+  min-width: 300px;
+  
+  .el-message__content {
+    color: var(--color-text-primary) !important;
+    font-weight: 500;
+  }
+  
+  // 图标颜色适配
+  .el-message__icon {
+    font-size: 18px;
+  }
+  
+  &.el-message--success .el-message__icon { color: var(--color-secondary-success); }
+  &.el-message--warning .el-message__icon { color: var(--color-secondary-warning); }
+  &.el-message--error .el-message__icon { color: var(--color-secondary-danger); }
+  &.el-message--info .el-message__icon { color: var(--color-secondary-info); }
+}
+
+// 消息弹框 (Confirm/Alert) - 毛玻璃主题风格
+.el-message-box {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(var(--glass-blur, 20px)) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur, 20px)) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+  border-radius: 20px !important;
+  padding: 0 !important;
+  width: 420px !important;
+  max-width: 90vw;
+  overflow: hidden;
+
+  .el-message-box__header {
+    padding: 20px 24px 16px !important;
+    border-bottom: 1px solid var(--glass-border);
+
+    .el-message-box__title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+
+    .el-message-box__headerbtn {
+      top: 20px;
+      right: 20px;
+
+      .el-message-box__close {
+        color: var(--color-text-secondary);
+        &:hover { color: var(--color-primary); }
+      }
+    }
+  }
+
+  .el-message-box__content {
+    padding: 24px !important;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+
+    .el-message-box__status {
+      position: static !important;
+      transform: none !important;
+      font-size: 24px !important;
+      flex-shrink: 0;
+
+      &.el-icon-warning  { color: var(--color-secondary-warning); }
+      &.el-icon-success  { color: var(--color-secondary-success); }
+      &.el-icon-error    { color: var(--color-secondary-danger); }
+      &.el-icon-info     { color: var(--color-secondary-info); }
+    }
+
+    .el-message-box__message {
+      padding: 0 !important;
+      font-size: 15px;
+      color: var(--color-text-primary);
+      line-height: 1.6;
+
+      p { margin: 0; }
+    }
+  }
+
+  .el-message-box__btns {
+    padding: 16px 24px 20px !important;
+    border-top: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+
+    button {
+      margin: 0 !important;
+      border-radius: 12px !important;
+      padding: 10px 24px !important;
+      font-size: 14px !important;
+      font-weight: 600 !important;
+      height: auto !important;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+      // 取消按钮
+      &:not(.el-button--primary) {
+        background: rgba(var(--color-text-secondary, 203, 213, 225), 0.1) !important;
+        border: 1px solid var(--glass-border) !important;
+        color: var(--color-text-secondary) !important;
+
+        &:hover {
+          background: rgba(var(--color-text-secondary, 203, 213, 225), 0.2) !important;
+        }
+      }
+
+      // 确定按钮
+      &.el-button--primary {
+        background: linear-gradient(135deg,
+          rgba(var(--color-primary-rgb), 0.95),
+          rgba(var(--color-primary-rgb), 0.8)) !important;
+        border-color: transparent !important;
+        color: #fff !important;
+        box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.3) !important;
+
+        &:hover {
+          box-shadow: 0 6px 20px rgba(var(--color-primary-rgb), 0.45) !important;
+          transform: translateY(-1px);
+        }
+      }
+    }
+  }
+}
+
+// 暗色消息提示 (Custom Dark Toast) - 参考 Image 2
+.el-message.dark-toast {
+  background-color: #1e293b !important; // Dark blue/gray (slate-800)
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  min-width: unset;
+  padding: 10px 20px;
+  border-radius: 8px;
+  
+  .el-message__content {
+    color: #ffffff !important;
+    font-weight: 500;
+  }
+  
+  .el-message__icon {
+    color: #2dce89 !important; // Green checkmark
+    font-size: 16px;
+    margin-right: 8px;
+  }
+}
+
+// 轮播图箭头 - 毛玻璃主题风格
+.el-carousel__arrow {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(var(--glass-blur, 20px)) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur, 20px)) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--color-text-primary) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+  i {
+    color: var(--color-text-primary) !important;
+    font-weight: 700;
+  }
+
+  &:hover {
+    background: rgba(var(--color-primary-rgb), 0.2) !important;
+    border-color: var(--color-primary) !important;
+    color: var(--color-primary) !important;
+    box-shadow: 0 4px 16px rgba(var(--color-primary-rgb), 0.3) !important;
+
+    i { color: var(--color-primary) !important; }
+  }
+}
+
+// 输入框字数统计 - 去掉白色背景
+.el-input__count,
+.el-input__count-inner {
+  background: transparent !important;
+  color: var(--color-text-disabled) !important;
+  font-size: 12px !important;
+}
+
+.el-textarea .el-input__count {
+  background: transparent !important;
+  color: var(--color-text-disabled) !important;
+}
+
+// glass-dialog 内的 textarea - 与 input 统一风格
+.glass-dialog {
+  .el-textarea__inner {
+    background-color: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    color: var(--color-text-primary) !important;
+    resize: none !important;
+
+    &::placeholder {
+      color: var(--color-text-secondary) !important;
+    }
+
+    &:hover {
+      border-color: rgba(var(--color-primary-rgb), 0.5) !important;
+    }
+
+    &:focus {
+      border-color: var(--color-primary) !important;
+      box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2) !important;
+    }
+  }
+}

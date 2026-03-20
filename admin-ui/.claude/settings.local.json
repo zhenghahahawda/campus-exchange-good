@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add .)",
+      "Bash(git commit:*)",
+      "Bash(git push origin master)",
+      "Bash(xargs grep -l \"goods-page\\\\|order-page\\\\|users-page\")",
+      "Bash(npm run:*)",
+      "Bash(node -e \":*)",
+      "Bash(\"c:\\\\Users\\\\Administrator\\\\Desktop\\\\shixi\\\\admin-ui\\\\Sql\\\\test_data_all_modules.sql\":*)",
+      "Bash(\"c:\\\\Users\\\\Administrator\\\\Desktop\\\\shixi\\\\admin-ui\\\\Sql\\\\test_data_all.sql\":*)"
+    ]
+  }
+}

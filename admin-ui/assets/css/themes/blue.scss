@@ -1,0 +1,77 @@
+// 蓝色主题 (Blue Theme) - Dark Mode
+// 基于深蓝色背景的 Glassmorphism 风格
+
+// 颜色系统 (Color System)
+$color-primary: #0075ff; // 亮蓝色，用于高亮和图标
+$color-secondary-success: #2dce89;
+$color-secondary-warning: #fb6340;
+$color-secondary-danger: #f5365c;
+$color-secondary-info: #11cdef;
+
+// 背景色 - 深色模式
+$color-bg-page: #0f172a; // 深蓝/黑背景
+// 玻璃表面颜色：使用半透明的深蓝/白混合，或者纯深色带透明度
+$color-bg-surface: rgba(30, 41, 59, 0.7); 
+
+// 文字颜色
+$color-text-primary: #ffffff;
+$color-text-secondary: rgba(255, 255, 255, 0.85); // 提高透明度，增加亮度 (原 0.7)
+$color-text-disabled: rgba(255, 255, 255, 0.55); // 提高透明度，增加亮度 (原 0.4)
+
+$color-border: rgba(255, 255, 255, 0.1);
+
+// 排版系统
+$font-family-base: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+$font-size-base: 14px;
+$font-weight-regular: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// 组件规范
+$border-radius-card: 20px;
+$padding-card: 24px;
+$shadow-card: 0 4px 6px rgba(0, 0, 0, 0.3);
+
+// 玻璃拟态 (Glassmorphism) - Dark Mode Optimized
+@mixin glass-effect($opacity: 0.1, $blur: 20px) {
+  background: rgba(255, 255, 255, $opacity); // 使用微弱的白色透明度来提亮深色背景
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  border: 1px solid rgba(255, 255, 255, 0.1); // 微弱的白边框
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+}
+
+@mixin glass-card {
+  // 卡片使用更明显的深色玻璃
+  background: rgba(30, 41, 59, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
+  
+  border-radius: $border-radius-card;
+  transform: translateZ(0);
+  will-change: transform;
+  contain: layout style;
+}
+
+@mixin glass-button($bg-opacity: 0.1, $hover-opacity: 0.2) {
+  color: $color-text-primary;
+  background-color: rgba(255, 255, 255, $bg-opacity);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, $hover-opacity);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+}
+
+$sidebar-width: 250px;
+$header-height: 80px;

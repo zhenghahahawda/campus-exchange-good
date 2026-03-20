@@ -1,0 +1,65 @@
+server:
+  port: 10010
+  tomcat:
+    connection-timeout: 60000
+    threads:
+      max: 200
+      min-spare: 10
+
+spring:
+  application:
+    name: campus-exchange
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+    serialization:
+      write-dates-as-timestamps: false
+      fail-on-empty-beans: false
+    default-property-inclusion: non_null
+  redis:
+    host: YOUR_REDIS_HOST
+    port: 6379
+    password: YOUR_REDIS_PASSWORD
+    database: 0
+    timeout: 10000ms
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://YOUR_DB_HOST:3306/exchange_system?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true&autoReconnect=true&failOverReadOnly=false&maxReconnects=10&initialTimeout=1
+    username: YOUR_DB_USERNAME
+    password: YOUR_DB_PASSWORD
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 5
+      minimum-idle: 2
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
+      auto-commit: true
+      pool-name: HikariCP-CampusExchange
+      validation-timeout: 5000
+      connection-init-sql: SELECT 1
+      keepalive-time: 300000
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: input
+  mapper-locations: classpath:mapper/*.xml
+
+# 腾讯云COS配置
+cos:
+  secret-id: YOUR_COS_SECRET_ID
+  secret-key: YOUR_COS_SECRET_KEY
+  region: ap-guangzhou
+  bucket-name: YOUR_BUCKET_NAME
+
+logging:
+  level:
+    com.example: debug
+    org.springframework: info
+    com.zaxxer.hikari: debug
+    com.baomidou.mybatisplus: debug
+    org.springframework.jdbc: debug
+    org.springframework.transaction: debug

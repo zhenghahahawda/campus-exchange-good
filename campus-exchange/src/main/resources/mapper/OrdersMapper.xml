@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campus.exchange.mapper.OrdersMapper">
+
+    <!-- 订单详情（关联用户和商品信息） -->
+    <select id="selectOrderDetail" resultType="com.campus.exchange.entity.Orders">
+        SELECT
+            o.order_id AS id,
+            o.order_number AS orderNo,
+            o.status,
+            o.initiator_id AS buyerId,
+            o.initiator_good_id AS buyerItemId,
+            o.receiver_id AS sellerId,
+            o.receiver_good_id AS sellerItemId,
+            o.exchange_code AS exchangeCode,
+            o.remark,
+            o.cancel_reason AS cancelReason,
+            o.admin_note AS adminNote,
+            o.created_at AS createTime,
+            o.updated_at AS updateTime,
+            o.completed_at AS completeTime,
+            o.cancelled_at AS cancelTime,
+            o.deleted_at AS deletedAt,
+            o.initiator_confirmed AS initiatorConfirmed,
+            o.receiver_confirmed AS receiverConfirmed,
+            o.initiator_review AS initiatorReview,
+            o.initiator_review_images AS initiatorReviewImages,
+            o.receiver_review AS receiverReview,
+            o.receiver_review_images AS receiverReviewImages,
+            u1.username AS buyerName,
+            u1.real_name AS buyerRealName,
+            u1.avatar_url AS buyerAvatar,
+            u1.phone AS buyerPhone,
+            u1.address AS buyerAddress,
+            u1.school AS buyerSchool,
+            u2.username AS sellerName,
+            u2.real_name AS sellerRealName,
+            u2.avatar_url AS sellerAvatar,
+            u2.phone AS sellerPhone,
+            u2.address AS sellerAddress,
+            u2.school AS sellerSchool,
+            g1.good_name AS buyerItemName,
+            g1.description AS buyerItemDescription,
+            g1.images AS buyerItemImages,
+            g2.good_name AS sellerItemName,
+            g2.description AS sellerItemDescription,
+            g2.images AS sellerItemImages
+        FROM orders o
+        LEFT JOIN users u1 ON o.initiator_id = u1.user_id
+        LEFT JOIN users u2 ON o.receiver_id = u2.user_id
+        LEFT JOIN goods g1 ON o.initiator_good_id = g1.good_id
+        LEFT JOIN goods g2 ON o.receiver_good_id = g2.good_id
+        WHERE o.order_id = #{orderId}
+    </select>
+
+    <!-- 分页查询订单列表（关联用户和商品信息） -->
+    <select id="selectOrdersWithDetails" resultType="com.campus.exchange.entity.Orders">
+        SELECT
+            o.order_id AS id,
+            o.order_number AS orderNo,
+            o.status,
+            o.initiator_id AS buyerId,
+            o.initiator_good_id AS buyerItemId,
+            o.receiver_id AS sellerId,
+            o.receiver_good_id AS sellerItemId,
+            o.exchange_code AS exchangeCode,
+            o.remark,
+            o.cancel_reason AS cancelReason,
+            o.admin_note AS adminNote,
+            o.created_at AS createTime,
+            o.updated_at AS updateTime,
+            o.completed_at AS completeTime,
+            o.cancelled_at AS cancelTime,
+            o.deleted_at AS deletedAt,
+            o.initiator_confirmed AS initiatorConfirmed,
+            o.receiver_confirmed AS receiverConfirmed,
+            o.initiator_review AS initiatorReview,
+            o.initiator_review_images AS initiatorReviewImages,
+            o.receiver_review AS receiverReview,
+            o.receiver_review_images AS receiverReviewImages,
+            u1.username AS buyerName,
+            u1.real_name AS buyerRealName,
+            u1.avatar_url AS buyerAvatar,
+            u1.phone AS buyerPhone,
+            u1.address AS buyerAddress,
+            u1.school AS buyerSchool,
+            u2.username AS sellerName,
+            u2.real_name AS sellerRealName,
+            u2.avatar_url AS sellerAvatar,
+            u2.phone AS sellerPhone,
+            u2.address AS sellerAddress,
+            u2.school AS sellerSchool,
+            g1.good_name AS buyerItemName,
+            g1.description AS buyerItemDescription,
+            g1.images AS buyerItemImages,
+            g2.good_name AS sellerItemName,
+            g2.description AS sellerItemDescription,
+            g2.images AS sellerItemImages
+        FROM orders o
+        LEFT JOIN users u1 ON o.initiator_id = u1.user_id
+        LEFT JOIN users u2 ON o.receiver_id = u2.user_id
+        LEFT JOIN goods g1 ON o.initiator_good_id = g1.good_id
+        LEFT JOIN goods g2 ON o.receiver_good_id = g2.good_id
+        WHERE o.deleted_at IS NULL
+        <if test="status != null and status != ''">
+            AND o.status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (o.order_number LIKE CONCAT('%', #{keyword}, '%')
+                 OR o.remark LIKE CONCAT('%', #{keyword}, '%')
+                 OR o.admin_note LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY o.created_at DESC
+    </select>
+
+</mapper>

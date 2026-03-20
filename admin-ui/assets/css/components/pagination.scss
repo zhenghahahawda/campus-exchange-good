@@ -1,0 +1,735 @@
+/**
+ * 统一分页样式 - 毛玻璃拟态风格
+ * 适用于所有页面的分页组件
+ * 遵循 UI 规范文档的设计标准
+ */
+@import '@/assets/css/themes/index.scss';
+
+.pagination-container,
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 32px;
+  padding: 24px 0;
+  position: relative;
+  
+  // 顶部装饰线 - 增强视觉层次
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 2px;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(var(--color-primary-rgb), 0.4), 
+      rgba(var(--color-primary-rgb), 0.6),
+      rgba(var(--color-primary-rgb), 0.4),
+      transparent);
+    border-radius: 2px;
+    animation: shimmer 3s ease-in-out infinite;
+  }
+  
+  // 底部光晕效果
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 400px;
+    height: 20px;
+    background: radial-gradient(ellipse, 
+      rgba(var(--color-primary-rgb), 0.1) 0%, 
+      transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.glass-pagination {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, 
+    rgba($color-bg-surface, 0.8), 
+    rgba($color-bg-surface, 0.6));
+  backdrop-filter: blur(25px);
+  border: 2px solid rgba($color-border, 0.25);
+  border-radius: 24px;
+  padding: 20px 32px;
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(var(--color-primary-rgb), 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  // 顶部高光条
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, 
+      rgba(var(--color-primary-rgb), 0.9), 
+      rgba(var(--color-primary-rgb), 0.6),
+      rgba(var(--color-primary-rgb), 0.9));
+    border-radius: 3px 3px 0 0;
+  }
+  
+  // 内部光晕效果
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 60%;
+    background: radial-gradient(ellipse, 
+      rgba(var(--color-primary-rgb), 0.03) 0%, 
+      transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  
+  // 悬停效果增强
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 
+      0 16px 50px rgba(0, 0, 0, 0.2),
+      0 6px 20px rgba(var(--color-primary-rgb), 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    border-color: rgba(var(--color-primary-rgb), 0.4);
+  }
+
+  ::v-deep {
+    // 总数显示 - 增强视觉效果
+    .el-pagination__total {
+      color: $color-text-primary;
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0 12px 0 0;
+      order: -1;
+      display: flex;
+      align-items: center;
+      background: linear-gradient(135deg, 
+        rgba(var(--color-primary-rgb), 0.1), 
+        rgba(var(--color-primary-rgb), 0.05));
+      padding: 8px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(var(--color-primary-rgb), 0.2);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      &::before {
+        content: '📊';
+        margin-right: 8px;
+        font-size: 18px;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+      }
+      
+      &:hover {
+        background: linear-gradient(135deg, 
+          rgba(var(--color-primary-rgb), 0.15), 
+          rgba(var(--color-primary-rgb), 0.08));
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.2);
+      }
+    }
+
+    // 分页器容器
+    .el-pager {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0;
+    }
+
+    // 上一页、下一页、页码按钮 - 增强毛玻璃效果
+    .btn-prev,
+    .btn-next,
+    .el-pager li {
+      background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.2), 
+        rgba(255, 255, 255, 0.1));
+      backdrop-filter: blur(15px);
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      color: $color-text-primary;
+      font-weight: 700;
+      font-size: 15px;
+      min-width: 44px;
+      height: 44px;
+      line-height: 44px;
+      padding: 0;
+      margin: 0;
+      border-radius: 14px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      
+      // 光波扫过效果
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, 
+          transparent, 
+          rgba(255, 255, 255, 0.3), 
+          transparent);
+        transition: left 0.6s ease;
+      }
+      
+      // 内部光晕
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 70%;
+        height: 70%;
+        background: radial-gradient(circle, 
+          rgba(255, 255, 255, 0.1) 0%, 
+          transparent 70%);
+        border-radius: 50%;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      &:hover:not(.disabled):not(.active) {
+        background: linear-gradient(135deg, 
+          rgba(var(--color-primary-rgb), 0.25), 
+          rgba(var(--color-primary-rgb), 0.15));
+        border-color: rgba(var(--color-primary-rgb), 0.5);
+        color: $color-primary;
+        transform: translateY(-4px) scale(1.05);
+        box-shadow: 
+          0 12px 30px rgba(var(--color-primary-rgb), 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        
+        &::before {
+          left: 100%;
+        }
+        
+        &::after {
+          opacity: 1;
+        }
+      }
+
+      &.active {
+        background: linear-gradient(135deg, 
+          rgba(var(--color-primary-rgb), 1), 
+          rgba(var(--color-primary-rgb), 0.9));
+        border-color: rgba(var(--color-primary-rgb), 0.8);
+        color: #fff;
+        font-weight: 800;
+        box-shadow: 
+          0 8px 25px rgba(var(--color-primary-rgb), 0.5),
+          0 0 20px rgba(var(--color-primary-rgb), 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        cursor: default;
+        transform: translateY(-3px) scale(1.1);
+        
+        &::after {
+          opacity: 1;
+          background: radial-gradient(circle, 
+            rgba(255, 255, 255, 0.2) 0%, 
+            transparent 70%);
+        }
+      }
+
+      &.disabled,
+      &:disabled {
+        background: linear-gradient(135deg, 
+          rgba($color-text-disabled, 0.1), 
+          rgba($color-text-disabled, 0.05));
+        border-color: rgba($color-text-disabled, 0.15);
+        color: $color-text-disabled;
+        cursor: not-allowed;
+        opacity: 0.5;
+        transform: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+        &:hover {
+          background: linear-gradient(135deg, 
+            rgba($color-text-disabled, 0.1), 
+            rgba($color-text-disabled, 0.05));
+          border-color: rgba($color-text-disabled, 0.15);
+          color: $color-text-disabled;
+          transform: none;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        &::before,
+        &::after {
+          display: none;
+        }
+      }
+
+      // 更多页码按钮
+      &.btn-quicknext,
+      &.btn-quickprev {
+        &:hover {
+          color: $color-primary;
+          
+          &::before {
+            left: 100%;
+          }
+        }
+      }
+    }
+
+    // 跳转输入框 - 统一高度和样式
+    .el-pagination__jump {
+      display: flex;
+      align-items: center;
+      color: transparent !important; // 隐藏所有默认文字
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0 0 0 20px;
+      height: 44px; // 确保与按钮高度一致
+      
+      // 隐藏所有子元素的文字内容，除了输入框
+      * {
+        color: transparent;
+      }
+      
+      &::before {
+        content: '前往';
+        margin-right: 10px;
+        color: $color-text-primary !important;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      
+      &::after {
+        content: '页';
+        margin-left: 10px;
+        color: $color-text-primary !important;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .el-input {
+        margin: 0 10px;
+        width: 70px;
+
+        .el-input__inner {
+          background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.2), 
+            rgba(255, 255, 255, 0.1));
+          backdrop-filter: blur(15px);
+          border: 2px solid rgba(255, 255, 255, 0.25);
+          color: $color-text-primary !important; // 确保输入框文字可见
+          font-size: 15px;
+          font-weight: 700;
+          height: 44px !important; // 强制与按钮高度一致
+          line-height: 40px; // 减去边框高度
+          padding: 0 !important; // 移除所有内边距
+          border-radius: 14px;
+          text-align: center !important; // 强制居中对齐
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 
+            0 4px 12px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+
+          &:hover {
+            background: linear-gradient(135deg, 
+              rgba(255, 255, 255, 0.25), 
+              rgba(255, 255, 255, 0.15));
+            border-color: rgba(var(--color-primary-rgb), 0.4);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 
+              0 6px 18px rgba(0, 0, 0, 0.15),
+              inset 0 1px 0 rgba(255, 255, 255, 0.4);
+          }
+
+          &:focus {
+            background: linear-gradient(135deg, 
+              rgba(255, 255, 255, 0.25), 
+              rgba(255, 255, 255, 0.15));
+            border-color: $color-primary;
+            box-shadow: 
+              0 0 0 4px rgba(var(--color-primary-rgb), 0.2),
+              0 6px 18px rgba(var(--color-primary-rgb), 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            outline: none;
+            transform: translateY(-2px) scale(1.05);
+          }
+
+          &::placeholder {
+            color: $color-text-disabled !important;
+            font-weight: 600;
+          }
+        }
+      }
+    }
+
+    // 每页显示数量选择器 - 统一高度和样式
+    .el-pagination__sizes {
+      margin: 0 20px 0 0;
+
+      .el-select {
+        .el-input {
+          width: 110px;
+
+          .el-input__inner {
+            background: linear-gradient(135deg, 
+              rgba(255, 255, 255, 0.2), 
+              rgba(255, 255, 255, 0.1));
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            color: $color-text-primary;
+            font-size: 15px;
+            font-weight: 700;
+            height: 44px !important; // 强制与按钮高度一致
+            line-height: 40px; // 减去边框高度
+            border-radius: 14px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center !important; // 强制居中对齐
+            padding: 0 40px 0 0 !important; // 右侧留空给箭头，左侧不留边距
+            box-shadow: 
+              0 4px 12px rgba(0, 0, 0, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.3);
+
+            &:hover {
+              background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.25), 
+                rgba(255, 255, 255, 0.15));
+              border-color: rgba(var(--color-primary-rgb), 0.5);
+              transform: translateY(-3px) scale(1.02);
+              box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            }
+
+            &:focus {
+              background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.25), 
+                rgba(255, 255, 255, 0.15));
+              border-color: $color-primary;
+              box-shadow: 
+                0 0 0 4px rgba(var(--color-primary-rgb), 0.2),
+                0 8px 25px rgba(var(--color-primary-rgb), 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+              outline: none;
+              transform: translateY(-3px) scale(1.02);
+            }
+          }
+          
+          .el-input__suffix {
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            
+            .el-select__caret {
+              color: $color-text-primary;
+              font-size: 18px;
+              font-weight: 800;
+              transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+              
+              &.is-reverse {
+                transform: rotateZ(180deg) scale(1.1);
+              }
+            }
+          }
+        }
+        
+        // 下拉面板样式
+        &:hover .el-input__suffix .el-select__caret {
+          color: $color-primary;
+          transform: scale(1.2) rotate(10deg);
+        }
+      }
+    }
+  }
+}
+
+// 响应式适配 - 移动端优化
+@media (max-width: 768px) {
+  .pagination-container,
+  .pagination-wrapper {
+    margin-top: 24px;
+    padding: 20px 16px;
+    
+    &::before {
+      width: 200px;
+    }
+    
+    &::after {
+      width: 300px;
+      height: 15px;
+    }
+  }
+
+  .glass-pagination {
+    padding: 16px 20px;
+    gap: 10px;
+    border-radius: 20px;
+    
+    ::v-deep {
+      .el-pagination__total {
+        font-size: 13px;
+        margin-right: 8px;
+        padding: 6px 12px;
+        height: 40px; // 移动端统一高度
+        
+        &::before {
+          font-size: 16px;
+          margin-right: 6px;
+        }
+      }
+      
+      .btn-prev,
+      .btn-next,
+      .el-pager li {
+        min-width: 40px;
+        height: 40px !important; // 强制统一高度
+        line-height: 36px; // 减去边框高度
+        font-size: 14px;
+        border-radius: 12px;
+      }
+
+      .el-pagination__jump {
+        font-size: 13px;
+        margin-left: 16px;
+        height: 40px; // 统一高度
+
+        .el-input {
+          width: 60px;
+
+          .el-input__inner {
+            height: 40px !important; // 强制统一高度
+            line-height: 36px; // 减去边框高度
+            font-size: 14px;
+            padding: 0 !important; // 移除内边距
+            border-radius: 12px;
+            text-align: center !important; // 强制居中
+          }
+        }
+      }
+      
+      .el-pagination__sizes .el-select .el-input {
+        width: 90px;
+        
+        .el-input__inner {
+          height: 40px !important; // 强制统一高度
+          line-height: 36px; // 减去边框高度
+          font-size: 14px;
+          padding: 0 32px 0 0 !important; // 右侧留空给箭头
+          border-radius: 12px;
+          text-align: center !important; // 强制居中
+        }
+        
+        .el-input__suffix {
+          right: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+        }
+      }
+    }
+  }
+}
+
+// 超小屏幕适配
+@media (max-width: 480px) {
+  .glass-pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 12px 16px;
+    gap: 8px;
+    
+    ::v-deep {
+      .el-pagination__total {
+        order: 1;
+        width: 100%;
+        justify-content: center;
+        margin: 0 0 12px 0;
+        height: 36px; // 超小屏幕统一高度
+      }
+      
+      .el-pagination__sizes {
+        order: 2;
+        margin: 0 8px 0 0;
+        
+        .el-select .el-input .el-input__inner {
+          height: 36px !important; // 强制统一高度
+          line-height: 32px; // 减去边框高度
+          padding: 0 28px 0 0 !important; // 右侧留空给箭头
+          text-align: center !important; // 强制居中
+        }
+        
+        .el-input__suffix {
+          top: 50%;
+          transform: translateY(-50%);
+        }
+      }
+      
+      .el-pager {
+        order: 3;
+        gap: 6px;
+      }
+      
+      .btn-prev,
+      .btn-next {
+        order: 3;
+        height: 36px !important; // 强制统一高度
+        line-height: 32px; // 减去边框高度
+        min-width: 36px;
+      }
+      
+      .el-pager li {
+        height: 36px !important; // 强制统一高度
+        line-height: 32px; // 减去边框高度
+        min-width: 36px;
+      }
+      
+      .el-pagination__jump {
+        order: 4;
+        width: 100%;
+        justify-content: center;
+        margin: 12px 0 0 0;
+        height: 36px; // 统一高度
+        
+        .el-input .el-input__inner {
+          height: 36px !important; // 强制统一高度
+          line-height: 32px; // 减去边框高度
+          padding: 0 !important; // 移除内边距
+          text-align: center !important; // 强制居中
+        }
+      }
+    }
+  }
+}
+
+// 每页条数下拉选项样式 - 增强毛玻璃效果
+::v-deep .el-select-dropdown {
+  background: linear-gradient(135deg, 
+    rgba($color-bg-surface, 0.95), 
+    rgba($color-bg-surface, 0.9));
+  backdrop-filter: blur(25px);
+  border: 2px solid rgba($color-border, 0.25);
+  border-radius: 20px;
+  box-shadow: 
+    0 16px 50px rgba(0, 0, 0, 0.4),
+    0 4px 20px rgba(var(--color-primary-rgb), 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  padding: 16px 0;
+  overflow: hidden;
+  
+  // 顶部装饰条
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, 
+      rgba(var(--color-primary-rgb), 0.9), 
+      rgba(var(--color-primary-rgb), 0.6),
+      rgba(var(--color-primary-rgb), 0.9));
+    border-radius: 3px 3px 0 0;
+  }
+  
+  // 内部光晕
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 60%;
+    background: radial-gradient(ellipse, 
+      rgba(var(--color-primary-rgb), 0.05) 0%, 
+      transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  
+  .el-select-dropdown__item {
+    background: transparent;
+    color: $color-text-primary;
+    font-size: 15px;
+    font-weight: 700;
+    height: 48px;
+    line-height: 48px;
+    padding: 0 24px;
+    margin: 0 12px;
+    border-radius: 12px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    
+    // 光波扫过效果
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, 
+        transparent, 
+        rgba(var(--color-primary-rgb), 0.15), 
+        transparent);
+      transition: left 0.6s ease;
+    }
+    
+    &:hover {
+      background: linear-gradient(135deg, 
+        rgba(var(--color-primary-rgb), 0.2), 
+        rgba(var(--color-primary-rgb), 0.1));
+      color: $color-primary;
+      transform: translateX(6px) scale(1.02);
+      box-shadow: 
+        0 4px 15px rgba(var(--color-primary-rgb), 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      
+      &::before {
+        left: 100%;
+      }
+    }
+    
+    &.selected {
+      background: linear-gradient(135deg, 
+        rgba(var(--color-primary-rgb), 0.25), 
+        rgba(var(--color-primary-rgb), 0.15));
+      color: $color-primary;
+      font-weight: 800;
+      transform: translateX(4px);
+      box-shadow: 
+        0 4px 15px rgba(var(--color-primary-rgb), 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      
+      &::after {
+        content: '✓';
+        float: right;
+        color: $color-primary;
+        font-size: 18px;
+        font-weight: 800;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+    }
+  }
+}

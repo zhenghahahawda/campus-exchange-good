@@ -1,0 +1,403 @@
+/**
+ * 统计卡片样式 - 毛玻璃拟态风格
+ * 适用于仪表盘和统计页面的卡片组件
+ * 遵循 UI 规范文档的设计标准
+ */
+@import '@/assets/css/themes/index.scss';
+
+.stat-cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  @include glass-card;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+  
+  // 卡片内部光晕效果
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, 
+      rgba(var(--color-primary-rgb), 0.03) 0%, 
+      transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+  }
+  
+  // 顶部装饰条
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, 
+      rgba(var(--color-primary-rgb), 0.8), 
+      rgba(var(--color-primary-rgb), 0.4),
+      rgba(var(--color-primary-rgb), 0.8));
+    border-radius: 20px 20px 0 0;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  
+  &:hover {
+    transform: translateY(-8px);
+    border-color: rgba(var(--color-primary-rgb), 0.3);
+    box-shadow: 
+      0 20px 60px rgba(0, 0, 0, 0.15),
+      0 8px 24px rgba(var(--color-primary-rgb), 0.2);
+    
+    &::before,
+    &::after {
+      opacity: 1;
+    }
+    
+    .stat-icon {
+      transform: scale(1.1) rotate(5deg);
+    }
+    
+    .stat-value {
+      transform: scale(1.05);
+    }
+  }
+}
+
+.stat-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-title {
+  font-size: 14px;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  line-height: 1.1;
+  margin-bottom: 4px;
+  transition: transform 0.3s ease;
+  
+  // 数字动画效果
+  &.animate {
+    animation: countUp 0.8s ease-out;
+  }
+}
+
+@keyframes countUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateY(-5px) scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.stat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  
+  // 图标内部光效
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.2), 
+      transparent);
+    transition: left 0.6s ease;
+  }
+  
+  &:hover::before {
+    left: 100%;
+  }
+  
+  // 不同类型的图标背景
+  &.primary {
+    background: linear-gradient(135deg, 
+      rgba(var(--color-primary-rgb), 0.15), 
+      rgba(var(--color-primary-rgb), 0.25));
+    color: $color-primary;
+    box-shadow: 0 8px 24px rgba(var(--color-primary-rgb), 0.2);
+  }
+  
+  &.success {
+    background: linear-gradient(135deg, 
+      rgba(var(--color-secondary-success-rgb), 0.15), 
+      rgba(var(--color-secondary-success-rgb), 0.25));
+    color: $color-secondary-success;
+    box-shadow: 0 8px 24px rgba(var(--color-secondary-success-rgb), 0.2);
+  }
+  
+  &.warning {
+    background: linear-gradient(135deg, 
+      rgba(var(--color-secondary-warning-rgb), 0.15), 
+      rgba(var(--color-secondary-warning-rgb), 0.25));
+    color: $color-secondary-warning;
+    box-shadow: 0 8px 24px rgba(var(--color-secondary-warning-rgb), 0.2);
+  }
+  
+  &.danger {
+    background: linear-gradient(135deg, 
+      rgba(var(--color-secondary-danger-rgb), 0.15), 
+      rgba(var(--color-secondary-danger-rgb), 0.25));
+    color: $color-secondary-danger;
+    box-shadow: 0 8px 24px rgba(var(--color-secondary-danger-rgb), 0.2);
+  }
+  
+  &.info {
+    background: linear-gradient(135deg, 
+      rgba(var(--color-secondary-info-rgb), 0.15), 
+      rgba(var(--color-secondary-info-rgb), 0.25));
+    color: $color-secondary-info;
+    box-shadow: 0 8px 24px rgba(var(--color-secondary-info-rgb), 0.2);
+  }
+}
+
+.stat-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba($color-border, 0.1);
+}
+
+.stat-change {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: $font-weight-medium;
+  
+  .change-icon {
+    font-size: 14px;
+  }
+  
+  &.positive {
+    color: $color-secondary-success;
+  }
+  
+  &.negative {
+    color: $color-secondary-danger;
+  }
+  
+  &.neutral {
+    color: $color-text-secondary;
+  }
+}
+
+.stat-period {
+  font-size: 12px;
+  color: $color-text-disabled;
+  font-weight: $font-weight-regular;
+}
+
+// 特殊卡片变体
+.stat-card.featured {
+  background: linear-gradient(135deg, 
+    rgba(var(--color-primary-rgb), 0.05), 
+    rgba(var(--color-primary-rgb), 0.02));
+  border: 2px solid rgba(var(--color-primary-rgb), 0.2);
+  
+  &::after {
+    opacity: 1;
+    background: linear-gradient(90deg, 
+      rgba(var(--color-primary-rgb), 1), 
+      rgba(var(--color-primary-rgb), 0.6),
+      rgba(var(--color-primary-rgb), 1));
+  }
+  
+  .stat-title {
+    color: $color-primary;
+  }
+}
+
+.stat-card.compact {
+  padding: 16px;
+  
+  .stat-card-header {
+    margin-bottom: 12px;
+  }
+  
+  .stat-value {
+    font-size: 24px;
+  }
+  
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+  
+  .stat-footer {
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+}
+
+// 加载状态
+.stat-card.loading {
+  .stat-value,
+  .stat-title,
+  .stat-change,
+  .stat-period {
+    background: linear-gradient(90deg, 
+      rgba($color-text-disabled, 0.2) 25%, 
+      rgba($color-text-disabled, 0.4) 50%, 
+      rgba($color-text-disabled, 0.2) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    color: transparent;
+    border-radius: 4px;
+  }
+  
+  .stat-icon {
+    background: rgba($color-text-disabled, 0.2);
+    color: transparent;
+    
+    &::before {
+      display: none;
+    }
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+// 响应式适配
+@media (max-width: $breakpoint-lg) {
+  .stat-cards-container {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  .stat-cards-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .stat-card {
+    padding: 20px;
+  }
+  
+  .stat-value {
+    font-size: 28px;
+  }
+  
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+}
+
+@media (max-width: $breakpoint-sm) {
+  .stat-cards-container {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .stat-card {
+    padding: 16px;
+    
+    &:hover {
+      transform: translateY(-4px);
+    }
+  }
+  
+  .stat-card-header {
+    margin-bottom: 16px;
+  }
+  
+  .stat-value {
+    font-size: 24px;
+  }
+  
+  .stat-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+  
+  .stat-footer {
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+}
+
+// 打印样式
+@media print {
+  .stat-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ddd;
+    
+    &:hover {
+      transform: none;
+    }
+    
+    &::before,
+    &::after {
+      display: none;
+    }
+  }
+  
+  .stat-icon {
+    &::before {
+      display: none;
+    }
+  }
+}

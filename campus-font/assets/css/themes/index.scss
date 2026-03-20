@@ -1,0 +1,98 @@
+// 主题 SCSS 变量，引用 CSS 变量
+// 这样我们在组件中只需要引用这个文件，就可以通过切换根元素的 data-theme 属性来切换主题
+
+// 颜色系统 (Color System)
+$color-primary: var(--color-primary);
+$color-primary-rgb: var(--color-primary-rgb);
+$color-secondary-success: var(--color-secondary-success);
+$color-secondary-success-rgb: var(--color-secondary-success-rgb);
+$color-secondary-warning: var(--color-secondary-warning);
+$color-secondary-warning-rgb: var(--color-secondary-warning-rgb);
+$color-secondary-danger: var(--color-secondary-danger);
+$color-secondary-danger-rgb: var(--color-secondary-danger-rgb);
+$color-secondary-info: var(--color-secondary-info);
+$color-secondary-info-rgb: var(--color-secondary-info-rgb);
+
+$color-sidebar-user-card-bg: var(--color-sidebar-user-card-bg);
+$color-pill-bg: var(--color-pill-bg);
+$color-pill-active-bg: var(--color-pill-active-bg);
+$color-pill-active-text: var(--color-pill-active-text);
+
+$color-nav-active-bg: var(--color-nav-active-bg);
+$color-nav-active-text: var(--color-nav-active-text);
+
+// 背景色
+$color-bg-page: var(--color-bg-page);
+$color-bg-surface: var(--color-bg-surface);
+
+// 文字颜色
+$color-text-primary: var(--color-text-primary);
+$color-text-secondary: var(--color-text-secondary);
+$color-text-disabled: var(--color-text-disabled);
+
+$color-border: var(--color-border);
+
+// 排版系统 (Typography) - 保持不变
+$font-family-base: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+$font-size-base: 14px;
+$font-weight-regular: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// 组件规范 (Component Specs)
+$border-radius-card: 20px;
+$padding-card: 24px;
+$shadow-card: var(--card-shadow);
+
+$sidebar-width: 250px;
+$header-height: 80px;
+
+// 响应式断点
+$breakpoint-xs: 576px;
+$breakpoint-sm: 768px;
+$breakpoint-md: 992px;
+$breakpoint-lg: 1200px;
+$breakpoint-xl: 1400px;
+
+// Glassmorphism Mixins - Updated to use CSS Variables
+@mixin glass-effect($opacity: null, $blur: null) {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+@mixin glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  
+  border-radius: $border-radius-card;
+  /* Hardware acceleration & Optimization */
+  transform: translateZ(0);
+  will-change: transform;
+  contain: layout style;
+}
+
+@mixin glass-button {
+  color: $color-text-primary;
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  box-shadow: none;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background-color: var(--color-bg-surface);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    color: $color-primary;
+  }
+}

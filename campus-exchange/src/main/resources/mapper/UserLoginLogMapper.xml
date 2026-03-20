@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campus.exchange.mapper.UserLoginLogMapper">
+
+    <resultMap id="BaseResultMap" type="com.campus.exchange.entity.UserLoginLog">
+        <id column="log_id" property="logId"/>
+        <result column="user_id" property="userId"/>
+        <result column="login_time" property="loginTime"/>
+        <result column="login_ip" property="loginIp"/>
+        <result column="login_status" property="loginStatus"/>
+        <result column="fail_reason" property="failReason"/>
+        <result column="user_agent" property="userAgent"/>
+        <result column="device_type" property="deviceType"/>
+        <result column="browser" property="browser"/>
+        <result column="os" property="os"/>
+        <result column="country" property="country"/>
+        <result column="province" property="province"/>
+        <result column="city" property="city"/>
+    </resultMap>
+
+</mapper>

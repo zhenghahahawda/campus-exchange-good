@@ -1,0 +1,168 @@
+@import './themes/variables.scss';
+@import './themes/index.scss';
+@import './components/element-overrides.scss';
+
+html, body {
+  font-family: $font-family-base;
+  background-color: $color-bg-page;
+  color: $color-text-primary;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul, li {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.el-button--primary {
+  background-color: $color-primary;
+  border-color: $color-primary;
+  
+  &:hover, &:focus {
+    background-color: $color-primary;
+    border-color: $color-primary;
+    filter: brightness(1.1);
+  }
+}
+
+// 简单的 flex 布局工具类
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.justify-center { justify-content: center; }
+.gap-2 { gap: 8px; }
+.gap-4 { gap: 16px; }
+
+// 卡片基础样式
+.base-card {
+  background: $color-bg-surface;
+  border-radius: $border-radius-card;
+  padding: $padding-card;
+  box-shadow: $shadow-card;
+}
+
+// 标题样式
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: $font-weight-bold;
+}
+
+.text-primary { color: $color-primary; }
+.text-secondary { color: $color-text-secondary; }
+
+// View Transitions API 全局动画样式
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+// Element UI Dialog 毛玻璃样式覆盖
+.el-dialog__wrapper {
+  .glass-dialog {
+    @include glass-card;
+    border: 1px solid rgba($color-border, 0.5);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    
+    .el-dialog__header {
+      padding: 24px 28px 20px;
+      border-bottom: 1px solid rgba($color-border, 0.2);
+      background: rgba($color-primary, 0.02);
+      
+      .el-dialog__title {
+        font-size: 18px;
+        font-weight: 700;
+        color: $color-text-primary;
+      }
+      
+      .el-dialog__headerbtn {
+        top: 24px;
+        right: 24px;
+        width: 36px;
+        height: 36px;
+        
+        .el-dialog__close {
+          font-size: 20px;
+          font-weight: 700;
+          color: $color-text-secondary;
+          
+          &:hover {
+            color: $color-primary;
+          }
+        }
+      }
+    }
+    
+    .el-dialog__body {
+      padding: 20px 28px;
+      max-height: 70vh;
+      overflow-y: auto;
+      
+      &::-webkit-scrollbar {
+        width: 10px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: rgba($color-border, 0.08);
+        border-radius: 10px;
+        margin: 8px 0;
+        border: 2px solid transparent;
+        background-clip: content-box;
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, 
+          rgba(var(--color-primary-rgb), 0.4), 
+          rgba(var(--color-primary-rgb), 0.3));
+        border-radius: 10px;
+        border: 2px solid transparent;
+        background-clip: content-box;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: inset 0 0 6px rgba(var(--color-primary-rgb), 0.2);
+        
+        &:hover {
+          background: linear-gradient(180deg, 
+            rgba(var(--color-primary-rgb), 0.6), 
+            rgba(var(--color-primary-rgb), 0.5));
+          box-shadow: inset 0 0 8px rgba(var(--color-primary-rgb), 0.3),
+                      0 0 12px rgba(var(--color-primary-rgb), 0.2);
+        }
+        
+        &:active {
+          background: linear-gradient(180deg, 
+            rgba(var(--color-primary-rgb), 0.8), 
+            rgba(var(--color-primary-rgb), 0.7));
+          box-shadow: inset 0 0 10px rgba(var(--color-primary-rgb), 0.4);
+        }
+      }
+    }
+    
+    .el-dialog__footer {
+      padding: 16px 28px 24px;
+      background: rgba($color-primary, 0.02);
+      border-top: 1px solid rgba($color-border, 0.2);
+    }
+  }
+}

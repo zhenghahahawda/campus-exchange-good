@@ -1,0 +1,19 @@
+export const CATEGORY_STATUS = {
+  DISABLED: 0,
+  ENABLED: 1
+};
+
+export const CATEGORY_STATUS_LABELS = {
+  [CATEGORY_STATUS.DISABLED]: '已禁用',
+  [CATEGORY_STATUS.ENABLED]: '已启用'
+};
+
+export const CATEGORY_STATUS_COLORS = {
+  [CATEGORY_STATUS.DISABLED]: 'info',
+  [CATEGORY_STATUS.ENABLED]: 'success'
+};
+
+export const PAGINATION_CONFIG = {
+  DEFAULT_PAGE: 1,
+  PAGE_SIZES: [10, 20, 50, 100]
+};
