@@ -89,7 +89,8 @@ export default {
       currentTemperature: '22°C',
       weatherIcon: '☀️',
       timeInterval: null,
-      messageTimer: null
+      messageTimer: null,
+      weatherInterval: null
     }
   },
   mounted() {
@@ -99,12 +100,15 @@ export default {
     // 监听全局消息事件
     this.$root.$on('show-island-message', this.showIslandMessage)
 
-    // 获取天气（模拟）
     this.fetchWeather()
+    this.weatherInterval = setInterval(this.fetchWeather, 30 * 60 * 1000)
   },
   beforeDestroy() {
     if (this.timeInterval) {
       clearInterval(this.timeInterval)
+    }
+    if (this.weatherInterval) {
+      clearInterval(this.weatherInterval)
     }
     if (this.messageTimer) {
       clearTimeout(this.messageTimer)
@@ -168,25 +172,52 @@ export default {
       const weekday = weekdays[now.getDay()]
       this.currentDate = `${month}/${day}${weekday}`
     },
-    fetchWeather() {
-      // 模拟天气数据
-      const weathers = [
-        { icon: '☀️', temp: '22°C' },
-        { icon: '⛅', temp: '20°C' },
-        { icon: '☁️', temp: '18°C' },
-        { icon: '🌧️', temp: '15°C' }
-      ]
-      const random = weathers[Math.floor(Math.random() * weathers.length)]
-      this.weatherIcon = random.icon
-      this.currentTemperature = random.temp
+    async fetchWeather() {
+      try {
+        const { getRealtimeWeather, getWeatherEmoji } = await import('@/api/weather')
+        const result = await getRealtimeWeather()
+
+        if (result.success) {
+          const weather = result.data
+          this.currentTemperature = `${weather.temperature}°`
+          this.weatherIcon = getWeatherEmoji(weather.icon)
+        } else {
+          this.useFallbackWeather()
+        }
+      } catch (error) {
+        this.useFallbackWeather()
+      }
+    },
+    useFallbackWeather() {
+      const hour = new Date().getHours()
+      let temp, icon
+
+      if (hour >= 6 && hour < 12) {
+        temp = 7
+        icon = '🌫️'
+      } else if (hour >= 12 && hour < 18) {
+        temp = 12
+        icon = '⛅'
+      } else if (hour >= 18 && hour < 22) {
+        temp = 9
+        icon = '☁️'
+      } else {
+        temp = 5
+        icon = '🌫️'
+      }
+
+      this.currentTemperature = `${temp}°`
+      this.weatherIcon = icon
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
+@import '@/assets/css/themes/index.scss';
+
 .dynamic-island {
-  background: rgba(0, 0, 0, 0.85);
+  background: color-mix(in srgb, var(--color-bg-surface) 72%, rgba(0, 0, 0, 0.35));
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-radius: 40px;
@@ -199,6 +230,7 @@ export default {
   transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   cursor: pointer;
+  border: 1px solid var(--glass-border);
 
   &.standalone {
     position: fixed;
@@ -259,7 +291,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 16px;
-  color: white;
+  color: var(--color-text-primary);
   font-size: 13px;
   width: 100%;
   justify-content: space-between;
@@ -278,7 +310,7 @@ export default {
 
     .current-date {
       font-size: 11px;
-      opacity: 0.8;
+      color: var(--color-text-secondary);
       font-weight: 400;
     }
 
@@ -292,7 +324,7 @@ export default {
   .temperature {
     font-size: 16px;
     font-weight: 500;
-    opacity: 0.9;
+    color: var(--color-text-secondary);
     flex-shrink: 0;
   }
 }
@@ -301,7 +333,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: white;
+  color: var(--color-text-primary);
   font-size: 14px;
   font-weight: 500;
 
@@ -319,7 +351,7 @@ export default {
   align-items: center;
   gap: 16px;
   width: 100%;
-  color: white;
+  color: var(--color-text-primary);
 
   .music-wave {
     display: flex;
@@ -330,7 +362,7 @@ export default {
     span {
       width: 3px;
       height: 100%;
-      background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+      background: linear-gradient(180deg, var(--color-primary), var(--color-secondary-info));
       border-radius: 2px;
       animation: wave 1s ease-in-out infinite;
 
@@ -365,7 +397,7 @@ export default {
 
     .music-artist {
       font-size: 12px;
-      opacity: 0.7;
+      color: var(--color-text-secondary);
     }
   }
 

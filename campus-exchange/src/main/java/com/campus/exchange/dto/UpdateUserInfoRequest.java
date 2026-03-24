@@ -34,4 +34,8 @@ public class UpdateUserInfoRequest {
 
     @Schema(description = "生日", example = "2000-01-01")
     private LocalDate birthday;
+
+    @Schema(description = "用户主题偏好", example = "dark-blue")
+    @Size(max = 50, message = "主题标识不能超过50个字符")
+    private String themePreference;
 }

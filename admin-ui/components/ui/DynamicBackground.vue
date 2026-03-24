@@ -27,8 +27,8 @@
 </template>
 
 <script>
-// 引入主题配置以获取视频映射关系
-import { themes } from '@/assets/css/themes/themes-config.js'
+// 从 localStorage 读取当前主题数据，不再依赖本地 themes-config.js
+import { ThemeManager } from '@/utils/themeManager'
 
 export default {
   name: 'DynamicBackground',
@@ -36,14 +36,18 @@ export default {
     return {
       videoSrc: '',
       hasWallpaper: false,
-      observer: null
+      observer: null,
+      reducedMotion: false
     }
   },
   mounted() {
-    // 初始化视频
+    this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (this.reducedMotion) {
+      this.pauseBlobAnimations()
+    }
+
     this.checkThemeVideo()
-    
-    // 监听 html 上的 data-theme 属性变化
+
     this.observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
@@ -51,27 +55,32 @@ export default {
         }
       }
     })
-    
+
     this.observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['data-theme']
     })
+
+    document.addEventListener('visibilitychange', this.handleVisibilityChange)
   },
   beforeDestroy() {
     if (this.observer) {
       this.observer.disconnect()
     }
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange)
   },
   methods: {
     checkThemeVideo() {
-      const currentThemeId = document.documentElement.getAttribute('data-theme')
-      const themeConfig = themes.find(t => t.id === currentThemeId)
-      
-      if (themeConfig && themeConfig.video) {
-        // 如果当前主题有视频且与正在播放的不同
-        if (this.videoSrc !== themeConfig.video) {
-          this.videoSrc = themeConfig.video
-          // 强制重新加载视频
+      // 从 localStorage 获取当前主题完整数据
+      const themeData = ThemeManager.getCurrentThemeData()
+
+      // 判断壁纸类型
+      const isVideo = themeData && themeData.wallpaperType === 'video' && themeData.wallpaperUrl
+      const isImage = themeData && themeData.wallpaperType === 'image' && themeData.wallpaperUrl
+
+      if (isVideo) {
+        if (this.videoSrc !== themeData.wallpaperUrl) {
+          this.videoSrc = themeData.wallpaperUrl
           this.$nextTick(() => {
             if (this.$refs.bgVideo) {
               this.$refs.bgVideo.load()
@@ -80,15 +89,54 @@ export default {
           })
         }
       } else {
+        if (this.videoSrc) {
+          const video = this.$refs.bgVideo
+          if (video) {
+            video.pause()
+            video.removeAttribute('src')
+            video.load()
+          }
+        }
         this.videoSrc = ''
       }
-      
-      // 检查是否为静态壁纸
-      if (themeConfig && themeConfig.wallpaper) {
-        this.hasWallpaper = true
+
+      this.hasWallpaper = !!isImage
+
+      // 视频/壁纸主题下隐藏 blob 动画
+      this.toggleBlobAnimations(isVideo || isImage)
+    },
+
+    handleVisibilityChange() {
+      const video = this.$refs.bgVideo
+      if (!video || !this.videoSrc) return
+      if (document.hidden) {
+        video.pause()
       } else {
-        this.hasWallpaper = false
+        video.play().catch(() => {})
       }
+    },
+
+    toggleBlobAnimations(hasMedia) {
+      const blobsEl = this.$el && this.$el.querySelector('.blobs')
+      if (!blobsEl) return
+      if (hasMedia || this.reducedMotion) {
+        blobsEl.style.animationPlayState = 'paused'
+        blobsEl.style.opacity = '0'
+      } else {
+        blobsEl.style.animationPlayState = 'running'
+        blobsEl.style.opacity = ''
+      }
+    },
+
+    pauseBlobAnimations() {
+      this.$nextTick(() => {
+        const blobs = this.$el && this.$el.querySelectorAll('.blob')
+        if (blobs) {
+          blobs.forEach(blob => {
+            blob.style.animationPlayState = 'paused'
+          })
+        }
+      })
     }
   }
 }
@@ -165,6 +213,10 @@ export default {
   height: 100%;
   filter: blur(80px); // 核心：高斯模糊融合
   opacity: 0.6; // 调整强度
+  transition: opacity 0.5s ease; // 视频/壁纸主题下平滑隐藏
+  will-change: opacity;
+  // 创建独立合成层，避免 blur 影响其他元素的渲染性能
+  transform: translateZ(0);
 }
 
 .blob {

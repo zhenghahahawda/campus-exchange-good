@@ -74,11 +74,17 @@
         </div>
 
         <!-- 空状态 -->
-        <div v-else class="empty-state">
+        <div v-else-if="!loading" class="empty-state">
           <div class="empty-icon">🎨</div>
           <h3>未找到匹配主题</h3>
           <p>尝试换个搜索关键词或分类吧</p>
           <el-button type="primary" @click="resetFilters">重置筛选</el-button>
+        </div>
+
+        <!-- 加载状态 -->
+        <div v-else class="loading-state">
+          <i class="el-icon-loading"></i>
+          <p>加载主题中...</p>
         </div>
 
         <!-- 分页 -->
@@ -95,9 +101,9 @@
 </template>
 
 <script>
-import { themes, themeCategories } from '@/assets/css/themes/themes-config'
 import { ThemeManager, ThemeFilter, Paginator } from '@/utils/themeManager'
 import { MessageHelper } from '@/utils/messageHelper'
+import { getActiveThemes } from '@/api/theme'
 import ThemeCard from '@/components/theme/ThemeCard.vue'
 import ThemeCategoryTabs from '@/components/theme/ThemeCategoryTabs.vue'
 import ThemePagination from '@/components/theme/ThemePagination.vue'
@@ -113,14 +119,15 @@ export default {
   },
   data() {
     return {
-      themes: Object.freeze([...themes]),
-      categories: [...themeCategories],
+      themes: [],
+      categories: [{ id: 'all', name: '全部', icon: '🎨', count: 0 }],
       currentTheme: 'default',
       currentCategory: 'all',
       searchQuery: '',
       currentPage: 1,
       pageSize: 9,
-      isTransitioning: false
+      isTransitioning: false,
+      loading: false
     }
   },
   computed: {
@@ -147,11 +154,59 @@ export default {
       this.currentPage = 1
     }
   },
-  mounted() {
+  async mounted() {
     this.currentTheme = ThemeManager.loadSavedTheme()
+    await this.fetchThemes()
     this.updateCounts()
   },
   methods: {
+    async fetchThemes() {
+      const categoryMap = {
+        dark: { name: '深色', icon: '🌙' },
+        light: { name: '浅色', icon: '☀️' },
+        tech: { name: '科技', icon: '🚀' },
+        nature: { name: '自然', icon: '🌿' },
+        luxury: { name: '奢华', icon: '💎' },
+        creative: { name: '创意', icon: '✨' },
+        video: { name: '动态', icon: '🎬' },
+        culture: { name: '文化', icon: '🏮' },
+        static: { name: '静态', icon: '🖼️' }
+      }
+      try {
+        this.loading = true
+        const res = await getActiveThemes(this.$axios)
+        if (res.code === 20000) {
+          this.themes = res.data.map(theme => ({
+            id: theme.themeKey,
+            name: theme.name,
+            description: theme.description,
+            gradient: theme.gradient,
+            primaryColor: theme.primaryColor,
+            sidebarBg: theme.sidebarBg,
+            tags: JSON.parse(theme.tags || '[]'),
+            category: JSON.parse(theme.category || '[]'),
+            wallpaper: theme.wallpaperUrl,
+            wallpaperType: theme.wallpaperType,
+            cssVariables: JSON.parse(theme.cssVariables || '{}')
+          }))
+          // 从主题数据动态生成分类
+          const categorySet = new Set()
+          this.themes.forEach(t => (t.category || []).forEach(c => categorySet.add(c)))
+          const dynamicCategories = [{ id: 'all', name: '全部', icon: '🎨', count: this.themes.length }]
+          categorySet.forEach(id => {
+            const info = categoryMap[id] || { name: id, icon: '📁' }
+            const count = this.themes.filter(t => t.category && t.category.includes(id)).length
+            dynamicCategories.push({ id, name: info.name, icon: info.icon, count })
+          })
+          this.categories = dynamicCategories
+        }
+      } catch (error) {
+        console.error('获取主题失败:', error)
+        MessageHelper.error(this, '获取主题失败')
+      } finally {
+        this.loading = false
+      }
+    },
     updateCounts() {
       this.categories = ThemeFilter.updateCategoryCounts(this.categories, this.themes)
     },
@@ -160,12 +215,15 @@ export default {
     },
     handleThemeSelect(themeId, event) {
       if (this.isTransitioning || this.currentTheme === themeId) return
-      
+
+      const theme = this.themes.find(t => t.id === themeId)
+      if (!theme) return
+
       this.isTransitioning = true
-      ThemeManager.transitionTheme(themeId, event, () => {
+      ThemeManager.transitionTheme(theme, event, () => {
         this.currentTheme = themeId
         this.isTransitioning = false
-        MessageHelper.success(this, `已切换至 ${this.activeThemeObj.name}`)
+        MessageHelper.success(this, `已切换至 ${theme.name}`)
       })
     },
     handlePageChange(page) {
@@ -334,23 +392,39 @@ export default {
 .empty-state {
   text-align: center;
   padding: 80px 0;
-  
+
   .empty-icon {
     font-size: 64px;
     margin-bottom: 24px;
   }
-  
+
   h3 {
     font-size: 20px;
     font-weight: $font-weight-bold;
     color: $color-text-primary;
     margin-bottom: 8px;
   }
-  
+
   p {
     font-size: 15px;
     color: $color-text-secondary;
     margin-bottom: 24px;
+  }
+}
+
+.loading-state {
+  text-align: center;
+  padding: 80px 0;
+
+  i {
+    font-size: 48px;
+    color: $color-primary;
+    margin-bottom: 16px;
+  }
+
+  p {
+    font-size: 15px;
+    color: $color-text-secondary;
   }
 }
 

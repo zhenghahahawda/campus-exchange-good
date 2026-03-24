@@ -4,9 +4,27 @@
     :class="{ active: isActive }"
     @click="$emit('select', theme.id, $event)"
   >
-    <div class="theme-preview" :style="{ background: theme.gradient }">
+    <div class="theme-preview" :style="previewStyle">
+      <!-- 壁纸背景（图片） -->
+      <img
+        v-if="hasImageWallpaper"
+        :src="theme.wallpaper"
+        class="preview-wallpaper"
+        alt=""
+      />
+      <!-- 壁纸背景（视频） -->
+      <video
+        v-else-if="hasVideoWallpaper"
+        :src="theme.wallpaper"
+        class="preview-wallpaper preview-video"
+        autoplay
+        loop
+        muted
+        playsinline
+      ></video>
+      <!-- 模拟UI叠加层 -->
       <div class="preview-content">
-        <div class="preview-sidebar" :style="{ background: theme.sidebarBg }">
+        <div class="preview-sidebar" :style="{ background: theme.sidebarBg || 'rgba(0,0,0,0.3)' }">
           <div class="preview-logo" :style="{ background: theme.primaryColor }"></div>
           <div class="preview-menu-item" :style="{ background: theme.primaryColor }"></div>
           <div class="preview-menu-item"></div>
@@ -48,6 +66,24 @@ export default {
       type: Boolean,
       default: false
     }
+  },
+  computed: {
+    hasImageWallpaper() {
+      if (!this.theme.wallpaper) return false
+      if (this.theme.wallpaperType === 'image') return true
+      return /\.(png|jpe?g|gif|webp|svg|bmp)(\?|$)/i.test(this.theme.wallpaper)
+    },
+    hasVideoWallpaper() {
+      if (!this.theme.wallpaper) return false
+      if (this.theme.wallpaperType === 'video') return true
+      return /\.(mp4|webm|ogg)(\?|$)/i.test(this.theme.wallpaper)
+    },
+    previewStyle() {
+      if (this.hasImageWallpaper || this.hasVideoWallpaper) {
+        return {}
+      }
+      return { background: this.theme.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }
+    }
   }
 }
 </script>
@@ -80,11 +116,27 @@ export default {
   position: relative;
 }
 
+.preview-wallpaper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.preview-video {
+  pointer-events: none;
+}
+
 .preview-content {
   display: flex;
   height: 100%;
   padding: 12px;
   gap: 8px;
+  position: relative;
+  z-index: 1;
 }
 
 .preview-sidebar {

@@ -20,6 +20,7 @@ import java.util.UUID;
 public class CosServiceImpl implements CosService {
 
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
+    private static final long MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 
     @Autowired
     private COSClient cosClient;
@@ -40,6 +41,33 @@ public class CosServiceImpl implements CosService {
     public String uploadGoodsImage(MultipartFile file) {
         validateImageFile(file);
         String key = "goods/" + generateFileName(file);
+        return uploadToCos(file, key);
+    }
+
+    /**
+     * 上传主题文件（壁纸或预览图，支持图片和视频）
+     */
+    @Override
+    public String uploadThemeFile(MultipartFile file, String subDir) {
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException("上传文件不能为空");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null) {
+            throw new BusinessException("无法识别文件类型");
+        }
+        boolean isImage = contentType.startsWith("image/");
+        boolean isVideo = contentType.equals("video/mp4");
+        if (!isImage && !isVideo) {
+            throw new BusinessException("只支持图片(jpg/png/gif)和视频(mp4)文件");
+        }
+        if (isImage && file.getSize() > MAX_FILE_SIZE) {
+            throw new BusinessException("图片大小不能超过5MB");
+        }
+        if (isVideo && file.getSize() > MAX_VIDEO_SIZE) {
+            throw new BusinessException("视频大小不能超过50MB");
+        }
+        String key = "themes/" + subDir + "/" + generateFileName(file);
         return uploadToCos(file, key);
     }
 

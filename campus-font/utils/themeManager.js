@@ -2,19 +2,50 @@
 export class ThemeManager {
   /**
    * 应用主题
-   * @param {string} themeId - 主题ID
+   * @param {Object} theme - 主题对象
    */
-  static applyTheme(themeId) {
+  static applyTheme(theme) {
     const root = document.documentElement;
-    
+    const themeId = typeof theme === 'string' ? theme : theme.id;
+
     if (themeId === 'default') {
       root.removeAttribute('data-theme');
     } else {
       root.setAttribute('data-theme', themeId);
     }
-    
+
+    // 应用 CSS 变量
+    if (theme.cssVariables) {
+      Object.entries(theme.cssVariables).forEach(([key, value]) => {
+        root.style.setProperty(key, value);
+      });
+    }
+
+    // 应用壁纸并持久化
+    if (theme.wallpaper) {
+      this.applyWallpaper(theme.wallpaper, theme.wallpaperType);
+      localStorage.setItem('selected-theme-wallpaper', theme.wallpaper);
+      localStorage.setItem('selected-theme-wallpaper-type', theme.wallpaperType || '');
+    } else {
+      this.applyWallpaper(null, null);
+      localStorage.removeItem('selected-theme-wallpaper');
+      localStorage.removeItem('selected-theme-wallpaper-type');
+    }
+
     // 保存到 localStorage
     localStorage.setItem('selected-theme', themeId);
+  }
+
+  /**
+   * 应用壁纸
+   * @param {string} url - 壁纸URL
+   * @param {string} type - 壁纸类型 (image/video)
+   */
+  static applyWallpaper(url, type) {
+    const event = new CustomEvent('theme-wallpaper-change', {
+      detail: { url, type }
+    });
+    window.dispatchEvent(event);
   }
 
   /**
@@ -36,17 +67,17 @@ export class ThemeManager {
 
   /**
    * 主题切换动画（使用 View Transitions API）
-   * @param {string} themeId - 目标主题ID
+   * @param {Object|string} theme - 目标主题对象或ID
    * @param {Object} clickEvent - 点击事件对象
    * @param {Function} callback - 切换完成回调
    * @returns {Promise} 切换完成的Promise
    */
-  static transitionTheme(themeId, clickEvent, callback) {
+  static transitionTheme(theme, clickEvent, callback) {
     const root = document.documentElement;
-    
+
     // 不支持 View Transitions API 时直接应用
     if (!document.startViewTransition) {
-      this.applyTheme(themeId);
+      this.applyTheme(theme);
       if (callback) callback();
       return Promise.resolve();
     }
@@ -55,7 +86,7 @@ export class ThemeManager {
     const rect = clickEvent.currentTarget.getBoundingClientRect();
     const x = rect.left + rect.width / 2;
     const y = rect.top + rect.height / 2;
-    
+
     // 计算扩散半径
     const endRadius = Math.hypot(
       Math.max(x, window.innerWidth - x),
@@ -64,7 +95,7 @@ export class ThemeManager {
 
     // 开始过渡
     const transition = document.startViewTransition(() => {
-      this.applyTheme(themeId);
+      this.applyTheme(theme);
     });
 
     transition.ready.then(() => {

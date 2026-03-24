@@ -28,6 +28,11 @@ public interface UserSessionService {
     UserSession getSessionByToken(String token);
 
     /**
+     * 根据刷新令牌获取会话
+     */
+    UserSession getSessionByRefreshToken(String refreshToken);
+
+    /**
      * 根据用户ID获取所有会话
      */
     List<UserSession> getSessionsByUserId(Integer userId);
@@ -85,7 +90,7 @@ public interface UserSessionService {
     /**
      * 根据旧的refreshToken更新会话的令牌
      */
-    void updateTokenByRefreshToken(String oldRefreshToken, String newToken, String newRefreshToken, LocalDateTime newExpiresAt);
+    boolean updateTokenByRefreshToken(String oldRefreshToken, String newToken, String newRefreshToken, LocalDateTime newExpiresAt);
 
     /**
      * 使用户所有会话失效

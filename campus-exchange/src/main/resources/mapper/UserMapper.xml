@@ -7,4 +7,12 @@
         {CALL generate_user_id(#{userId, mode=OUT, jdbcType=INTEGER})}
     </select>
 
+    <update id="updateThemePreferenceByOldPreference">
+        UPDATE users
+        SET theme_preference = #{newPreference},
+            updated_at = NOW()
+        WHERE theme_preference = #{oldPreference}
+          AND deleted_at IS NULL
+    </update>
+
 </mapper>

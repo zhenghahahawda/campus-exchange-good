@@ -3,9 +3,8 @@
  * 文档：https://seniverse.yuque.com/hyper_data/api_v3
  */
 
-// 心知天气 API 配置
 const WEATHER_CONFIG = {
-  apiKey: 'Sb5dkFZamkvOCCVCU',
+  apiKey: process.env.SENIVERSE_API_KEY || '',
   baseUrl: 'https://api.seniverse.com/v3'
 }
 
@@ -17,6 +16,13 @@ const LOCATION = 'wuhan'
  * @returns {Promise}
  */
 export function getRealtimeWeather() {
+  if (!WEATHER_CONFIG.apiKey) {
+    return Promise.resolve({
+      success: false,
+      message: '未配置 SENIVERSE_API_KEY'
+    })
+  }
+
   const url = `${WEATHER_CONFIG.baseUrl}/weather/now.json?key=${WEATHER_CONFIG.apiKey}&location=${LOCATION}&language=zh-Hans&unit=c`
 
   return fetch(url)

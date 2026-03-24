@@ -33,9 +33,9 @@ export default ({ $axios, app, req }, inject) => {
     }, delay)
   }
 
-  // 添加请求到刷新队列
-  const addRefreshSubscriber = (callback) => {
-    refreshSubscribers.push(callback)
+  // 判断是否为强制下线/会话失效，不应再尝试 refresh
+  const isForcedLogoutMessage = (message = '') => {
+    return ['会话已失效', '会话不存在', '会话已过期', '令牌已失效'].some(keyword => message.includes(keyword))
   }
 
   // 执行刷新队列中的所有请求
@@ -154,6 +154,12 @@ export default ({ $axios, app, req }, inject) => {
         
         // 处理后端业务码：50014 未提供认证令牌 或 Token 无效
         if (res.code === 50014 || res.code === 401) {
+          const authMessage = res.message || res.msg || ''
+          if (isForcedLogoutMessage(authMessage)) {
+            redirectToLogin(authMessage, 'warning')
+            return Promise.reject(new Error(authMessage || '会话已失效'))
+          }
+
           if (!response.config.url.includes('/refresh-token')) {
             const originalRequest = response.config
             
@@ -228,6 +234,14 @@ export default ({ $axios, app, req }, inject) => {
         const banMessage = error.response.data.message || error.response.data.msg || '您的账户已被封禁，请联系管理员'
         redirectToLogin(banMessage, 'danger', 2000)
         return Promise.reject(error)
+      }
+
+      if (error.response && error.response.data) {
+        const authMessage = error.response.data.message || error.response.data.msg || ''
+        if (isForcedLogoutMessage(authMessage)) {
+          redirectToLogin(authMessage, 'warning')
+          return Promise.reject(error)
+        }
       }
 
       // 401 未授权 或 403 无权限

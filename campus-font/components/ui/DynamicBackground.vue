@@ -1,19 +1,74 @@
 <template>
   <div class="dynamic-background">
-    <div class="bg-color"></div>
-    <div class="blobs">
-      <div class="blob blob-1"></div>
-      <div class="blob blob-2"></div>
-      <div class="blob blob-3"></div>
-      <div class="blob blob-4"></div>
-    </div>
+    <!-- 图片壁纸 -->
+    <img
+      v-if="isImageWallpaper"
+      :src="wallpaperUrl"
+      class="wallpaper-bg"
+      alt=""
+    />
+    <!-- 视频壁纸 -->
+    <video
+      v-else-if="isVideoWallpaper"
+      :src="wallpaperUrl"
+      class="wallpaper-bg"
+      autoplay
+      loop
+      muted
+      playsinline
+    ></video>
+    <!-- 默认渐变背景 -->
+    <template v-else>
+      <div class="bg-color"></div>
+      <div class="blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+        <div class="blob blob-4"></div>
+      </div>
+    </template>
     <div class="noise-overlay"></div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'DynamicBackground'
+  name: 'DynamicBackground',
+  data() {
+    return {
+      wallpaperUrl: null,
+      wallpaperType: null
+    }
+  },
+  computed: {
+    isImageWallpaper() {
+      if (!this.wallpaperUrl) return false
+      if (this.wallpaperType === 'image') return true
+      return /\.(png|jpe?g|gif|webp|svg|bmp)(\?|$)/i.test(this.wallpaperUrl)
+    },
+    isVideoWallpaper() {
+      if (!this.wallpaperUrl) return false
+      if (this.wallpaperType === 'video') return true
+      return /\.(mp4|webm|ogg)(\?|$)/i.test(this.wallpaperUrl)
+    }
+  },
+  mounted() {
+    const savedUrl = localStorage.getItem('selected-theme-wallpaper')
+    const savedType = localStorage.getItem('selected-theme-wallpaper-type')
+    if (savedUrl) {
+      this.wallpaperUrl = savedUrl
+      this.wallpaperType = savedType || null
+    }
+
+    this._wallpaperHandler = (e) => {
+      this.wallpaperUrl = e.detail.url || null
+      this.wallpaperType = e.detail.type || null
+    }
+    window.addEventListener('theme-wallpaper-change', this._wallpaperHandler)
+  },
+  beforeDestroy() {
+    window.removeEventListener('theme-wallpaper-change', this._wallpaperHandler)
+  }
 }
 </script>
 
@@ -29,6 +84,17 @@ export default {
   z-index: 0;
   overflow: hidden;
   background-color: $color-bg-page;
+}
+
+.wallpaper-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  pointer-events: none;
 }
 
 .bg-color {
@@ -111,17 +177,9 @@ export default {
 }
 
 @keyframes float {
-  0% {
-    transform: translate(0, 0) rotate(0deg) scale(1);
-  }
-  33% {
-    transform: translate(30px, -50px) rotate(10deg) scale(1.1);
-  }
-  66% {
-    transform: translate(-20px, 20px) rotate(-5deg) scale(0.9);
-  }
-  100% {
-    transform: translate(0, 0) rotate(0deg) scale(1);
-  }
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  33% { transform: translate(30px, -50px) rotate(10deg) scale(1.1); }
+  66% { transform: translate(-20px, 20px) rotate(-5deg) scale(0.9); }
+  100% { transform: translate(0, 0) rotate(0deg) scale(1); }
 }
 </style>

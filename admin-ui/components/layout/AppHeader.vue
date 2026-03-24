@@ -182,10 +182,10 @@ export default {
       timeInterval: null,
       notificationPollTimer: null,
       musicVolume: 50, // 音量状态
-      defaultMusicCover: '/images/wallpapers/ios.png', // 使用iOS风格图片作为默认音乐封面
-      themeList: ['default', 'purple', 'yellow', 'green', 'red', 'orange', 'lightblue', 'white', 'rainbow', 'iced-americano', 'dark-gold'],
+      defaultMusicCover: '',
+      themeList: ['ios-style', 'purple', 'yellow', 'green', 'red', 'orange', 'lightblue', 'white', 'rainbow', 'iced-americano', 'dark-gold'],
       themeNames: {
-        'default': '深蓝色主题',
+        'ios-style': 'iOS 风格主题',
         'purple': '浅紫色主题',
         'yellow': '暖黄色主题',
         'green': '清新绿色主题',
@@ -542,7 +542,7 @@ export default {
       // 获取根元素
       const root = document.documentElement;
       // 获取当前主题
-      const currentTheme = root.getAttribute('data-theme') || 'default';
+      const currentTheme = root.getAttribute('data-theme') || 'ios-style';
       
       // 计算下一个主题
       const currentIndex = this.themeList.indexOf(currentTheme);
@@ -597,11 +597,7 @@ export default {
     },
 
     applyTheme(root, newTheme) {
-      if (newTheme === 'default') {
-        root.removeAttribute('data-theme');
-      } else {
-        root.setAttribute('data-theme', newTheme);
-      }
+      root.setAttribute('data-theme', newTheme);
       this.showIslandMessage(`已切换至 ${this.themeNames[newTheme]}`, 'success');
     },
 

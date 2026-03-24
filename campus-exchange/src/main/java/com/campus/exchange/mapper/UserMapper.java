@@ -3,6 +3,7 @@ package com.campus.exchange.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.campus.exchange.entity.User;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
@@ -39,4 +40,9 @@ public interface UserMapper extends BaseMapper<User> {
      */
     @Select("SELECT LAST_INSERT_ID()")
     Integer getLastInsertId();
+
+    /**
+     * 批量回退用户主题偏好
+     */
+    int updateThemePreferenceByOldPreference(@Param("oldPreference") String oldPreference, @Param("newPreference") String newPreference);
 }

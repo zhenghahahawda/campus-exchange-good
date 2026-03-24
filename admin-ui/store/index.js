@@ -2,11 +2,14 @@
 // 引入 ThemeManager
 import { ThemeManager } from '@/utils/themeManager'
 
+const DEFAULT_THEME_KEY = 'ios-style'
+
 export const state = () => ({
-  theme: 'blue',
+  theme: DEFAULT_THEME_KEY,
   isSidebarCollapsed: false,
-  isUIHidden: false, // 新增：控制 UI 显示状态
+  isUIHidden: false,
   userInfo: null,
+  themeList: [], // 缓存从API获取的主题列表
   // 音乐播放器状态
   musicPlayer: {
     currentSong: null,
@@ -20,8 +23,9 @@ export const state = () => ({
 export const getters = {
   currentTheme: (state) => state.theme,
   isSidebarCollapsed: (state) => state.isSidebarCollapsed,
-  isUIHidden: (state) => state.isUIHidden, // 新增
+  isUIHidden: (state) => state.isUIHidden,
   userInfo: (state) => state.userInfo,
+  themeList: (state) => state.themeList,
   // 音乐播放器 getters
   currentSong: (state) => state.musicPlayer.currentSong,
   isPlaying: (state) => state.musicPlayer.isPlaying,
@@ -37,11 +41,14 @@ export const mutations = {
   SET_SIDEBAR_COLLAPSED(state, isCollapsed) {
     state.isSidebarCollapsed = isCollapsed
   },
-  SET_UI_HIDDEN(state, isHidden) { // 新增
+  SET_UI_HIDDEN(state, isHidden) {
     state.isUIHidden = isHidden
   },
   SET_USER_INFO(state, userInfo) {
     state.userInfo = userInfo
+  },
+  SET_THEME_LIST(state, list) {
+    state.themeList = list
   },
   // 音乐播放器 mutations
   SET_CURRENT_SONG(state, song) {
@@ -60,11 +67,11 @@ export const mutations = {
 }
 
 export const actions = {
-  initApp({ commit }) {
+  initApp({ commit, dispatch }) {
     if (process.client) {
+      // 先从 localStorage 加载已保存的主题（快速恢复，避免白屏）
       const savedTheme = ThemeManager.loadSavedTheme()
       if (savedTheme) {
-        ThemeManager.applyTheme(savedTheme)
         commit('SET_THEME', savedTheme)
       }
 
@@ -72,32 +79,97 @@ export const actions = {
       if (savedSidebarState !== null) {
         commit('SET_SIDEBAR_COLLAPSED', JSON.parse(savedSidebarState))
       }
-      
-      // 不持久化 UI 隐藏状态，刷新后默认显示 UI
 
       // 从 Cookie 恢复用户信息（页面刷新时）
       const { getUserInfo } = require('@/utils/auth')
       const userInfo = getUserInfo()
       if (userInfo) {
         commit('SET_USER_INFO', userInfo)
+        // 如果用户有主题偏好，从主题列表中找到并应用
+        if (userInfo.themePreference) {
+          dispatch('applyUserThemePreference', userInfo.themePreference)
+        }
+      }
+
+      // 异步加载主题列表
+      dispatch('fetchThemeList')
+    }
+  },
+
+  async fetchThemeList({ commit }) {
+    if (process.client) {
+      try {
+        const { getActiveThemes } = require('@/api/theme')
+        const axios = require('@/plugins/axios').default || window.$nuxt?.$axios
+        if (!axios) return
+        const res = await getActiveThemes(axios)
+        const list = res?.data?.data || res?.data || []
+        if (Array.isArray(list)) {
+          commit('SET_THEME_LIST', list)
+        }
+      } catch (e) {
+        console.warn('获取主题列表失败', e)
       }
     }
   },
 
-  setUserInfo({ commit }, userInfo) {
+  /**
+   * 根据用户偏好的 themeKey 应用主题
+   */
+  applyUserThemePreference({ state, commit }, themeKey) {
+    const normalizedThemeKey = ThemeManager.normalizeThemeKey(themeKey)
+
+    // 先尝试从 Vuex 缓存的主题列表中查找
+    let themeData = state.themeList.find(t => t.themeKey === normalizedThemeKey)
+
+    // 如果列表还没加载，尝试从 localStorage 恢复
+    if (!themeData) {
+      themeData = ThemeManager.getCurrentThemeData()
+      if (themeData && themeData.themeKey !== normalizedThemeKey) {
+        themeData = null
+      }
+    }
+
+    if (themeData) {
+      ThemeManager.applyTheme(themeData)
+      commit('SET_THEME', normalizedThemeKey)
+      return
+    }
+
+    const fallbackThemeData = state.themeList.find(t => t.themeKey === DEFAULT_THEME_KEY)
+    if (fallbackThemeData) {
+      ThemeManager.applyTheme(fallbackThemeData)
+      commit('SET_THEME', fallbackThemeData.themeKey)
+      return
+    }
+
+    commit('SET_THEME', normalizedThemeKey)
+    if (process.client) {
+      document.documentElement.setAttribute('data-theme', normalizedThemeKey)
+      localStorage.setItem('selected-theme', normalizedThemeKey)
+      localStorage.removeItem('selected-theme-data')
+    }
+  },
+
+  setUserInfo({ commit, dispatch }, userInfo) {
     commit('SET_USER_INFO', userInfo)
     if (process.client) {
       const { setUserInfo } = require('@/utils/auth')
       setUserInfo(userInfo)
+
+      // 登录/刷新用户信息时，如果服务器有主题偏好则应用
+      if (userInfo && userInfo.themePreference) {
+        dispatch('applyUserThemePreference', userInfo.themePreference)
+      }
     }
   },
 
-  toggleTheme({ commit, state }, theme) {
-    if (theme) {
+  toggleTheme({ commit }, themeData) {
+    if (themeData) {
       if (process.client) {
-        ThemeManager.applyTheme(theme)
+        ThemeManager.applyTheme(themeData)
       }
-      commit('SET_THEME', theme)
+      commit('SET_THEME', themeData.themeKey || themeData)
     }
   },
 
@@ -109,7 +181,7 @@ export const actions = {
     }
   },
 
-  toggleUI({ commit, state }) { // 新增 action
+  toggleUI({ commit, state }) {
     commit('SET_UI_HIDDEN', !state.isUIHidden)
   },
 

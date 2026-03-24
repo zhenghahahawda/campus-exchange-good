@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.mapper.ThemeMapper">
+    <resultMap id="BaseResultMap" type="org.example.entity.Theme">
+        <id column="theme_id" property="themeId"/>
+        <result column="theme_key" property="themeKey"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="category" property="category"/>
+        <result column="tags" property="tags"/>
+        <result column="gradient" property="gradient"/>
+        <result column="primary_color" property="primaryColor"/>
+        <result column="sidebar_bg" property="sidebarBg"/>
+        <result column="css_variables" property="cssVariables"/>
+        <result column="wallpaper_url" property="wallpaperUrl"/>
+        <result column="wallpaper_type" property="wallpaperType"/>
+        <result column="preview_image_url" property="previewImageUrl"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="is_active" property="isActive"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+</mapper>

@@ -7,7 +7,9 @@ import com.campus.exchange.dto.PageRequest;
 import com.campus.exchange.dto.PageResponse;
 import com.campus.exchange.entity.UserSession;
 import com.campus.exchange.mapper.UserSessionMapper;
+import com.campus.exchange.service.TokenBlacklistService;
 import com.campus.exchange.service.UserSessionService;
+import com.campus.exchange.util.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +36,12 @@ public class UserSessionServiceImpl implements UserSessionService {
 
     @Autowired(required = false)
     private RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired
+    private TokenBlacklistService tokenBlacklistService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Override
     public UserSession createSession(UserSession session) {
@@ -73,6 +81,13 @@ public class UserSessionServiceImpl implements UserSessionService {
             cacheSession(session);
         }
         return session;
+    }
+
+    @Override
+    public UserSession getSessionByRefreshToken(String refreshToken) {
+        QueryWrapper<UserSession> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("refresh_token", refreshToken);
+        return sessionMapper.selectOne(queryWrapper);
     }
 
     @Override
@@ -193,25 +208,18 @@ public class UserSessionServiceImpl implements UserSessionService {
 
     @Override
     public void deactivateSession(String sessionId) {
-        UserSession session = new UserSession();
-        session.setSessionId(sessionId);
-        session.setIsActive(0);
-        sessionMapper.updateById(session);
+        UserSession session = sessionMapper.selectById(sessionId);
+        revokeSession(session);
     }
 
     @Override
     public void deactivateByToken(String token) {
         UserSession session = getSessionByToken(token);
-        if (session != null) {
-            session.setIsActive(0);
-            sessionMapper.updateById(session);
-            // 清除缓存
-            removeSessionCache(token);
-        }
+        revokeSession(session);
     }
 
     @Override
-    public void updateTokenByRefreshToken(String oldRefreshToken, String newToken, String newRefreshToken, LocalDateTime newExpiresAt) {
+    public boolean updateTokenByRefreshToken(String oldRefreshToken, String newToken, String newRefreshToken, LocalDateTime newExpiresAt) {
         QueryWrapper<UserSession> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("refresh_token", oldRefreshToken);
         queryWrapper.eq("is_active", 1);
@@ -226,7 +234,9 @@ public class UserSessionServiceImpl implements UserSessionService {
             sessionMapper.updateById(session);
             // 写入新 token 缓存
             cacheSession(session);
+            return true;
         }
+        return false;
     }
 
     @Override
@@ -237,8 +247,7 @@ public class UserSessionServiceImpl implements UserSessionService {
 
         List<UserSession> sessions = sessionMapper.selectList(queryWrapper);
         for (UserSession session : sessions) {
-            session.setIsActive(0);
-            sessionMapper.updateById(session);
+            revokeSession(session);
         }
     }
 
@@ -261,8 +270,7 @@ public class UserSessionServiceImpl implements UserSessionService {
         queryWrapper.lt("expires_at", LocalDateTime.now());
         List<UserSession> expiredSessions = sessionMapper.selectList(queryWrapper);
         for (UserSession session : expiredSessions) {
-            session.setIsActive(0);
-            sessionMapper.updateById(session);
+            revokeSession(session);
         }
     }
 
@@ -286,6 +294,33 @@ public class UserSessionServiceImpl implements UserSessionService {
         stats.put("active", active);
         stats.put("inactive", total - active);
         return stats;
+    }
+
+    private void revokeSession(UserSession session) {
+        if (session == null || session.getIsActive() == null || session.getIsActive() != 1) {
+            return;
+        }
+
+        session.setIsActive(0);
+        sessionMapper.updateById(session);
+
+        revokeToken(session.getToken());
+        revokeToken(session.getRefreshToken());
+        removeSessionCache(session.getToken());
+    }
+
+    private void revokeToken(String token) {
+        if (token == null || token.isBlank()) {
+            return;
+        }
+        try {
+            long remaining = jwtUtil.getRemainingExpiration(token);
+            if (remaining > 0) {
+                tokenBlacklistService.addToBlacklist(token, remaining);
+            }
+        } catch (Exception e) {
+            log.warn("加入Token黑名单失败: {}", e.getMessage());
+        }
     }
 
     /**

@@ -11,6 +11,7 @@ import com.campus.exchange.mapper.UserMapper;
 import com.campus.exchange.service.CosService;
 import com.campus.exchange.service.LoginLogService;
 import com.campus.exchange.service.UserService;
+import com.campus.exchange.service.ThemeService;
 import com.campus.exchange.service.UserSessionService;
 import com.campus.exchange.entity.UserSession;
 import com.campus.exchange.service.GoodsService;
@@ -59,6 +60,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired(required = false)
     private ViolationReportService violationReportService;
+
+    @Autowired
+    private ThemeService themeService;
 
     @Autowired
     private com.campus.exchange.mapper.UserLoginLogMapper userLoginLogMapper;
@@ -369,6 +373,9 @@ public class UserServiceImpl implements UserService {
         }
 
         // 更新其他字段
+        if (request.getRealName() != null) {
+            user.setRealName(request.getRealName());
+        }
         if (request.getSchool() != null) {
             user.setSchool(request.getSchool());
         }
@@ -380,6 +387,9 @@ public class UserServiceImpl implements UserService {
         }
         if (request.getBirthday() != null) {
             user.setBirthday(request.getBirthday());
+        }
+        if (request.getThemePreference() != null) {
+            user.setThemePreference(themeService.validateAndNormalizeThemePreference(request.getThemePreference()));
         }
 
         user.setUpdatedAt(LocalDateTime.now());
@@ -430,6 +440,7 @@ public class UserServiceImpl implements UserService {
         response.setBirthday(user.getBirthday());
         response.setRegisterTime(user.getCreatedAt());
         response.setLastLoginTime(user.getLastLoginAt());
+        response.setThemePreference(user.getThemePreference());
         return response;
     }
 

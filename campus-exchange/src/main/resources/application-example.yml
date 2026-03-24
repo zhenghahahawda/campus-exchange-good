@@ -48,6 +48,9 @@ mybatis-plus:
       id-type: input
   mapper-locations: classpath:mapper/*.xml
 
+jwt:
+  secret-key: PLEASE_REPLACE_WITH_YOUR_OWN_AT_LEAST_32_CHAR_SECRET_KEY
+
 # 腾讯云COS配置
 cos:
   secret-id: YOUR_COS_SECRET_ID

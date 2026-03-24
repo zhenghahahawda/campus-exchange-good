@@ -55,4 +55,7 @@ public class UserInfoResponse {
 
     @Schema(description = "最后登录时间")
     private LocalDateTime lastLoginTime;
+
+    @Schema(description = "用户主题偏好")
+    private String themePreference;
 }

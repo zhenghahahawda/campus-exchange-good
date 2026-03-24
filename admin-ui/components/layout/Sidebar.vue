@@ -92,6 +92,7 @@ export default {
         { label: '登录日志', icon: 'el-icon-monitor', path: '/Back-Page/login-log' },
         { label: '系统会话', icon: 'el-icon-chat-dot-square', path: '/Back-Page/session-manage' },
         { label: '违规举报', icon: 'el-icon-warning', path: '/Back-Page/illegal' },
+        { label: '主题管理', icon: 'el-icon-brush', path: '/setting/theme-manage' },
       ]
     }
   },

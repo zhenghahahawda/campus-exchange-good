@@ -24,6 +24,9 @@ export default {
   components: {
     DynamicBackground,
     DynamicIsland
+  },
+  mounted() {
+    this.$store.dispatch('initApp')
   }
 }
 </script>

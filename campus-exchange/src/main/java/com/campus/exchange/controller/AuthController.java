@@ -71,6 +71,10 @@ public class AuthController {
                 return BaseResult.error("refreshToken不能为空");
             }
 
+            if (tokenBlacklistService.isBlacklisted(refreshToken)) {
+                return BaseResult.error("会话已失效，请重新登录");
+            }
+
             // 验证刷新令牌
             Claims claims = jwtUtil.validateRefreshToken(refreshToken);
             if (claims == null) {
@@ -79,6 +83,17 @@ public class AuthController {
 
             Integer userId = (Integer) claims.get("userId");
             String username = claims.getSubject();
+
+            var session = userSessionService.getSessionByRefreshToken(refreshToken);
+            if (session == null || session.getIsActive() == null || session.getIsActive() != 1) {
+                return BaseResult.error("会话已失效，请重新登录");
+            }
+            if (session.getExpiresAt() != null && session.getExpiresAt().isBefore(LocalDateTime.now())) {
+                return BaseResult.error("会话已过期，请重新登录");
+            }
+            if (!userId.equals(session.getUserId())) {
+                return BaseResult.error("会话用户不匹配，请重新登录");
+            }
 
             // 查询用户最新信息（确保用户仍然有效）
             User user = userMapper.selectById(userId);
@@ -101,9 +116,12 @@ public class AuthController {
                     .build();
 
             // 更新会话记录中的令牌
-            userSessionService.updateTokenByRefreshToken(
+            boolean updated = userSessionService.updateTokenByRefreshToken(
                     refreshToken, newAccessToken, newRefreshToken,
                     LocalDateTime.now().plusSeconds(jwtUtil.getAccessTokenExpiration()));
+            if (!updated) {
+                return BaseResult.error("会话已失效，请重新登录");
+            }
 
             return BaseResult.ok("刷新成功", response);
         } catch (Exception e) {

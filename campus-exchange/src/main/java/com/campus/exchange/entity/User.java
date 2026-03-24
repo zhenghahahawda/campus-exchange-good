@@ -130,4 +130,9 @@ public class User {
      * 软删除时间
      */
     private LocalDateTime deletedAt;
+
+    /**
+     * 用户主题偏好
+     */
+    private String themePreference = "ios-style";
 }

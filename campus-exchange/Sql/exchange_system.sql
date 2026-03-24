@@ -1,256 +1,3 @@
-/*
- Navicat Premium Data Transfer
-
- Source Server         : 腾讯云服务器
- Source Server Type    : MySQL
- Source Server Version : 80045
- Source Host           : 106.52.174.132:3306
- Source Schema         : exchange_system
-
- Target Server Type    : MySQL
- Target Server Version : 80045
- File Encoding         : 65001
-
- Date: 18/03/2026 08:59:34
-*/
-
-/*
-================================================================================
-                        校园交换系统数据库设计报告
-                    Campus Exchange System Database Design
-================================================================================
-
-【系统概述】
-校园交换系统是一个面向校园用户的物品交换平台，支持用户发布闲置物品、浏览商品、
-发起交换请求、在线沟通、订单管理、违规举报等功能。
-
-【设计原则】
-1. 数据完整性：使用外键约束保证数据一致性
-2. 性能优化：合理设置索引提升查询效率
-3. 安全性：密码加密存储、会话管理、操作日志
-4. 可扩展性：预留扩展字段、支持多种业务场景
-
-================================================================================
-                              核心业务模块
-================================================================================
-
-一、用户管理模块
---------------------------------------------------------------------------------
-【users】用户表
-- 功能：存储用户账号信息、认证数据、信用评分
-- 核心字段：user_id(8位ID)、username、password_hash、email、phone、user_type(admin/user)
-- 特性：支持用户封禁、信用评分系统、头像管理、学校信息
-- 索引：username/email/phone唯一索引，user_type/status/credit_score查询索引
-
-【user_id_sequence】用户ID序列表
-- 功能：生成10000000-99999999范围的顺序用户ID
-- 机制：使用AUTO_INCREMENT确保ID唯一性和连续性
-
-【user_sessions】用户会话表
-- 功能：管理用户登录会话、token认证
-- 核心字段：session_id、token、refresh_token、expires_at、device_id
-- 特性：支持多设备登录、会话过期管理、设备追踪
-
-【user_login_logs】登录日志表
-- 功能：记录用户登录历史、审计追踪
-- 核心字段：login_time、login_ip、login_status、device_type、browser、os
-- 用途：安全审计、异常登录检测
-
-二、商品管理模块
---------------------------------------------------------------------------------
-【goods】商品表
-- 功能：存储用户发布的交换物品信息
-- 核心字段：good_id、good_name、description、exchange_for、category_id、condition_level
-- 状态管理：
-  * status: pending(待审核)/approved(已通过)/rejected(已拒绝)
-  * shelf_status: archived(已下架)/listed(已上架)/sold(已售出)
-- 特性：支持多图片(JSON)、浏览/点赞/收藏计数、交换码、审核机制
-- 索引：user_id、category_id、status、shelf_status、复合索引优化查询
-
-【goods_categories】商品分类表
-- 功能：定义商品分类体系
-- 核心字段：category_id、category_name、category_code、sort_order
-- 特性：支持分类启用/禁用、排序控制
-
-三、交易订单模块
---------------------------------------------------------------------------------
-【orders】订单表
-- 功能：管理用户间的物品交换流程
-- 核心字段：order_id、order_number、initiator_id、receiver_id、
-           initiator_good_id、receiver_good_id、exchange_code
-- 状态流转：pending(待确认) → completed(已完成) / cancelled(已取消)
-- 确认机制：双方确认(initiator_confirmed、receiver_confirmed)
-- 特性：支持双向评价、交换码验证、完成/取消时间记录
-- 索引：order_number唯一索引、用户ID索引、状态索引、交换码索引
-
-四、即时通讯模块
---------------------------------------------------------------------------------
-【conversations】会话表
-- 功能：管理私聊和群聊会话
-- 核心字段：id(UUID)、type(private/group)、goods_id、last_message_id
-- 特性：支持商品关联、会话头像、最后消息追踪
-
-【conversation_participants】会话参与者表
-- 功能：记录会话成员及未读消息数
-- 核心字段：conversation_id、user_id、unread_count、joined_at
-- 约束：用户在同一会话中唯一(uk_conversation_user)
-
-【messages】消息表
-- 功能：存储会话中的所有消息
-- 核心字段：id(UUID)、conversation_id、sender_id、content、type
-- 消息类型：text(文本)、image(图片)、file(文件)
-- 索引：conversation_id、sender_id、created_at时间索引
-
-五、互动功能模块
---------------------------------------------------------------------------------
-【favorites】收藏表
-- 功能：用户收藏商品
-- 约束：每个用户对每个商品只能收藏一次(uk_user_goods)
-- 索引：user_id、goods_id、created_at
-
-【notifications】通知表
-- 功能：系统消息推送
-- 通知类型：new_goods(新商品)、exchange_request(交换请求)、
-           exchange_accepted(交换接受)、system(系统通知)
-- 核心字段：user_id、type、title、content、related_id、is_read
-- 索引：user_id、is_read、type、created_at
-
-六、违规管理模块
---------------------------------------------------------------------------------
-【violation_reports】违规举报表
-- 功能：用户举报违规内容
-- 举报对象：target_type(product/user)
-- 举报类型：inappropriate_content(不当内容)、fraud(欺诈)、spam(垃圾信息)等
-- 状态流转：pending → processing → approved/rejected
-- 处理措施：warning(警告)、tempBan(临时封禁)、permBan(永久封禁)、removeProduct(删除商品)
-- 核心字段：report_number、reporter_id、handler_id、handle_action、
-           credit_deduction、ban_duration
-- 索引：report_number唯一、target复合索引、status索引
-
-【violation_report_logs】举报处理日志表
-- 功能：记录举报处理全流程
-- 操作类型：assign(分配)、process(处理中)、approve(批准)、reject(拒绝)、comment(评论)
-- 核心字段：report_id、operator_id、action_type、old_status、new_status
-- 用途：审计追踪、流程回溯
-
-================================================================================
-                            数据库设计特点
-================================================================================
-
-【外键约束】
-- 所有关联表使用外键约束(FOREIGN KEY)
-- 级联删除(ON DELETE CASCADE)：删除主记录时自动删除关联记录
-- 限制更新(ON UPDATE RESTRICT)：防止误操作
-
-【索引策略】
-- 主键索引：所有表使用AUTO_INCREMENT主键
-- 唯一索引：username、email、phone、order_number等业务唯一字段
-- 单列索引：高频查询字段(user_id、status、created_at等)
-- 复合索引：多条件查询优化(idx_status_shelf、idx_target_type_id等)
-
-【字符集编码】
-- 统一使用utf8mb4字符集
-- 排序规则：utf8mb4_unicode_ci
-- 支持emoji和多语言字符
-
-【时间戳管理】
-- created_at：创建时间，默认CURRENT_TIMESTAMP
-- updated_at：更新时间，自动更新ON UPDATE CURRENT_TIMESTAMP
-- 业务时间：completed_at、cancelled_at、expires_at等
-
-【数据类型选择】
-- ID字段：INT UNSIGNED(用户/商品)、BIGINT UNSIGNED(日志/消息)、VARCHAR(50)(UUID)
-- 状态字段：VARCHAR(20)枚举值
-- 计数字段：INT UNSIGNED DEFAULT 0
-- 文本字段：VARCHAR(长度)、TEXT(长内容)
-- JSON字段：存储图片数组等复杂数据
-
-【安全设计】
-- 密码：password_hash存储加密后的密码
-- 会话：token/refresh_token双token机制
-- 审计：login_logs、violation_report_logs记录关键操作
-- 权限：user_type区分管理员和普通用户
-
-【性能优化】
-- 分页查询：created_at索引支持时间排序
-- 计数缓存：view_count、like_count、favorite_count避免实时统计
-- 未读消息：unread_count字段避免COUNT查询
-- 最后消息：last_message_id、last_message_time冗余提升查询效率
-
-================================================================================
-                              表关系图
-================================================================================
-
-users (核心表)
-  ├─→ goods (发布商品)
-  ├─→ orders (发起/接收交换)
-  ├─→ favorites (收藏商品)
-  ├─→ notifications (接收通知)
-  ├─→ user_sessions (登录会话)
-  ├─→ user_login_logs (登录日志)
-  ├─→ conversation_participants (参与会话)
-  ├─→ messages (发送消息)
-  ├─→ violation_reports (举报/处理)
-  └─→ violation_report_logs (操作日志)
-
-goods
-  ├─→ orders (交换商品)
-  ├─→ favorites (被收藏)
-  ├─→ conversations (关联会话)
-  └─→ goods_categories (所属分类)
-
-conversations
-  ├─→ conversation_participants (参与者)
-  └─→ messages (消息记录)
-
-violation_reports
-  └─→ violation_report_logs (处理日志)
-
-================================================================================
-                            业务流程说明
-================================================================================
-
-【用户注册登录流程】
-1. 用户注册 → user_id_sequence生成ID → users表创建记录
-2. 用户登录 → 验证密码 → user_sessions创建会话 → user_login_logs记录日志
-
-【商品发布流程】
-1. 用户发布商品 → goods表(status=pending)
-2. 管理员审核 → 更新status(approved/rejected)、auditor_id
-3. 审核通过 → 用户上架 → shelf_status=listed
-
-【交换流程】
-1. 用户A浏览商品 → 发起交换请求 → orders表(status=pending)
-2. 用户B收到通知 → 确认交换 → receiver_confirmed=true
-3. 双方确认 → status=completed → goods.shelf_status=sold
-4. 双方评价 → initiator_review、receiver_review
-
-【即时通讯流程】
-1. 用户发起聊天 → conversations表创建会话
-2. 添加参与者 → conversation_participants表
-3. 发送消息 → messages表 → 更新unread_count
-4. 读取消息 → unread_count清零
-
-【违规举报流程】
-1. 用户举报 → violation_reports表(status=pending)
-2. 管理员分配 → handler_id → violation_report_logs记录
-3. 管理员处理 → status=processing → 执行handle_action
-4. 完成处理 → status=approved/rejected → 扣除信用分/封禁用户
-
-================================================================================
-                              维护建议
-================================================================================
-
-1. 定期清理过期会话(user_sessions.expires_at)
-2. 归档历史订单和消息数据
-3. 监控索引使用情况，优化慢查询
-4. 定期备份数据库
-5. 审查违规举报处理效率
-6. 监控用户信用评分分布
-
-================================================================================
-*/
-
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -275,20 +22,20 @@ CREATE TABLE `conversation_participants`  (
 -- ----------------------------
 -- Records of conversation_participants
 -- ----------------------------
-INSERT INTO `conversation_participants` VALUES (2, '64cf61fb4a1f661178bff19b3957422a', 10000001, 6, '2026-03-14 00:51:49');
-INSERT INTO `conversation_participants` VALUES (3, '85aa7b12fcbacba39a1c554019a38192', 10000004, 0, '2026-03-14 01:53:33');
-INSERT INTO `conversation_participants` VALUES (5, '79c93ed96ac419135f9cbf5f1d2aedb6', 10000004, 0, '2026-03-14 20:28:08');
-INSERT INTO `conversation_participants` VALUES (6, '79c93ed96ac419135f9cbf5f1d2aedb6', 10000001, 1, '2026-03-14 20:28:08');
-INSERT INTO `conversation_participants` VALUES (7, '71e32daa75134b0643335e881f56e47a', 10000002, 1, '2026-03-14 21:13:01');
-INSERT INTO `conversation_participants` VALUES (8, '71e32daa75134b0643335e881f56e47a', 10000003, 1, '2026-03-14 21:13:01');
-INSERT INTO `conversation_participants` VALUES (9, '405effbcb4b3cf6486b3240d1fe67473', 10000003, 0, '2026-03-16 11:46:31');
-INSERT INTO `conversation_participants` VALUES (10, '405effbcb4b3cf6486b3240d1fe67473', 10000001, 1, '2026-03-16 11:46:31');
-INSERT INTO `conversation_participants` VALUES (11, '1ee0841cc5543ec431bd17455afa2c75', 10000002, 0, '2026-03-16 14:53:33');
-INSERT INTO `conversation_participants` VALUES (12, '1ee0841cc5543ec431bd17455afa2c75', 10000001, 1, '2026-03-16 14:53:33');
-INSERT INTO `conversation_participants` VALUES (21, '96bdac004c3582ab81c06bb716ffe9be', 10000002, 3, '2026-03-16 15:59:46');
-INSERT INTO `conversation_participants` VALUES (22, '96bdac004c3582ab81c06bb716ffe9be', 10000001, 4, '2026-03-16 15:59:46');
-INSERT INTO `conversation_participants` VALUES (23, '96bdac004c3582ab81c06bb716ffe9be', 10000003, 1, '2026-03-16 16:02:07');
-INSERT INTO `conversation_participants` VALUES (24, '96bdac004c3582ab81c06bb716ffe9be', 10000004, 1, '2026-03-16 16:43:46');
+INSERT INTO `conversation_participants` VALUES ('64cf61fb4a1f661178bff19b3957422a', 10000001, 6, '2026-03-14 00:51:49');
+INSERT INTO `conversation_participants` VALUES ('85aa7b12fcbacba39a1c554019a38192', 10000004, 0, '2026-03-14 01:53:33');
+INSERT INTO `conversation_participants` VALUES ('79c93ed96ac419135f9cbf5f1d2aedb6', 10000004, 0, '2026-03-14 20:28:08');
+INSERT INTO `conversation_participants` VALUES ('79c93ed96ac419135f9cbf5f1d2aedb6', 10000001, 1, '2026-03-14 20:28:08');
+INSERT INTO `conversation_participants` VALUES ('71e32daa75134b0643335e881f56e47a', 10000002, 1, '2026-03-14 21:13:01');
+INSERT INTO `conversation_participants` VALUES ('71e32daa75134b0643335e881f56e47a', 10000003, 1, '2026-03-14 21:13:01');
+INSERT INTO `conversation_participants` VALUES ('405effbcb4b3cf6486b3240d1fe67473', 10000003, 0, '2026-03-16 11:46:31');
+INSERT INTO `conversation_participants` VALUES ('405effbcb4b3cf6486b3240d1fe67473', 10000001, 1, '2026-03-16 11:46:31');
+INSERT INTO `conversation_participants` VALUES ('1ee0841cc5543ec431bd17455afa2c75', 10000002, 0, '2026-03-16 14:53:33');
+INSERT INTO `conversation_participants` VALUES ('1ee0841cc5543ec431bd17455afa2c75', 10000001, 1, '2026-03-16 14:53:33');
+INSERT INTO `conversation_participants` VALUES ('96bdac004c3582ab81c06bb716ffe9be', 10000002, 3, '2026-03-16 15:59:46');
+INSERT INTO `conversation_participants` VALUES ('96bdac004c3582ab81c06bb716ffe9be', 10000001, 4, '2026-03-16 15:59:46');
+INSERT INTO `conversation_participants` VALUES ('96bdac004c3582ab81c06bb716ffe9be', 10000003, 1, '2026-03-16 16:02:07');
+INSERT INTO `conversation_participants` VALUES ('96bdac004c3582ab81c06bb716ffe9be', 10000004, 1, '2026-03-16 16:43:46');
 
 -- ----------------------------
 -- Table structure for conversations
@@ -388,20 +135,20 @@ CREATE TABLE `goods`  (
 -- ----------------------------
 -- Records of goods
 -- ----------------------------
-INSERT INTO `goods` VALUES (91, '巴纳夫卡拉斯来看你了吗vl安家费阿萨 阿萨的撒的撒', '321', NULL, 1, 3, 1, 1, 10000003, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773493633213-屏幕截图 2025-01-02 210311.png\"]', 'EX-武汉-20260314-IRYO', 170, 0, 0, NULL, NULL, '2026-03-14 21:09:15', '2026-03-14 21:07:14', '2026-03-17 08:18:26', NULL, NULL);
-INSERT INTO `goods` VALUES (92, '给老婆奥氮平的历史怕【上了股票【三大流派【舍得离开as暗杀阿萨啊收到是的卡上打开电视了阿斯顿法定', '312', NULL, 1, 3, 1, 1, 10000002, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773498127167-2459460183.jpg\"]', 'EX-武汉-20260314-MRUZ', 239, 0, 0, NULL, NULL, '2026-03-14 22:23:26', '2026-03-14 22:22:08', '2026-03-17 08:18:26', NULL, NULL);
-INSERT INTO `goods` VALUES (93, '312', '321', NULL, 1, 3, 1, 1, 10000003, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1b3cbfb35fb941e1a6d3acfcb2e06d17.jpg\"]', 'EX-武汉-20260316-YT0K', 11, 0, 0, NULL, NULL, '2026-03-16 11:44:02', '2026-03-16 11:43:51', '2026-03-17 08:18:26', NULL, NULL);
-INSERT INTO `goods` VALUES (94, '3321312', '312', NULL, 1, 3, 1, 1, 10000002, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773632650247-wallhaven-k88yd7.jpg\"]', 'EX-武汉-20260316-WQSE', 65, 0, 0, NULL, NULL, '2026-03-16 11:44:26', '2026-03-16 11:44:11', '2026-03-17 08:18:26', NULL, NULL);
-INSERT INTO `goods` VALUES (95, '该发明了开了个收到固定更发达啊啊的啊大大发v从vccv是 ', '111', NULL, 1, 7, 1, 2, 10000003, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773643864961-wallhaven-3qqqwd.jpg\"]', 'EX-武汉-20260316-W8W6', 14, 0, 0, NULL, 10000001, '2026-03-16 14:57:33', '2026-03-16 14:51:07', '2026-03-16 15:46:03', '2026-03-16 15:09:03', NULL);
-INSERT INTO `goods` VALUES (96, '3asda 0328239 uiok mn329 ufewewew   ', '31231', NULL, 1, 7, 1, 2, 10000002, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773643879677-wallhaven-dpxxy3.png\"]', 'EX-武汉-20260316-ZDQK', 55, 0, 0, NULL, 10000001, '2026-03-16 14:57:38', '2026-03-16 14:51:21', '2026-03-17 08:13:56', '2026-03-16 15:09:02', NULL);
-INSERT INTO `goods` VALUES (98, '大山里面课件撒啊啊哇大大达到啊 a', '提高到三十\n', NULL, 3, 10, 1, 1, 10000001, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/46fca3138279451e808514ba8b56a0fc.jpg\"]', 'EX-武汉-20260316-7ASC', 25, 1, 1, NULL, 10000001, '2026-03-16 15:58:24', '2026-03-16 15:58:20', '2026-03-16 15:58:20', NULL, NULL);
-INSERT INTO `goods` VALUES (99, 'adkakdla', '312', '312', 1, 7, 1, 0, 10000002, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773647952909-2459460183.jpg\"]', 'EX-武汉-20260316-0FNA', 16, 0, 0, NULL, 10000001, '2026-03-16 15:59:29', '2026-03-16 15:59:14', '2026-03-17 12:59:24', NULL, NULL);
-INSERT INTO `goods` VALUES (100, '你哪来的这么多图片', '312', '312', 1, 7, 1, 1, 10000003, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773647969300-wallhaven-gww6wl.png\"]', 'EX-武汉-20260316-LDZ9', 18, 0, 0, NULL, 10000001, '2026-03-16 16:01:58', '2026-03-16 15:59:30', '2026-03-16 16:03:42', NULL, NULL);
-INSERT INTO `goods` VALUES (101, '312', '312', '321', 1, 1, 1, 1, 10000004, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773650569084-wallhaven-rqqw2q.jpg\"]', 'EX-武汉-20260316-0N00', 61, 0, 0, NULL, 10000001, '2026-03-16 16:43:31', '2026-03-16 16:42:50', '2026-03-16 16:42:50', NULL, NULL);
-INSERT INTO `goods` VALUES (103, '231', '312', '312', 1, 1, 1, 1, 10000003, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773712104870-wallhaven-k88yd7.jpg\"]', 'EX-武汉-20260317-E2OE', 13, 0, 0, NULL, 10000001, '2026-03-17 10:19:53', '2026-03-17 09:48:26', '2026-03-17 09:48:26', NULL, NULL);
-INSERT INTO `goods` VALUES (104, '而阿尔巴人', '1111111111', '无', 1, 1, 1, 1, 10000004, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773736904778-屏幕截图 2026-03-17 151415.png\"]', 'EX-武汉-20260317-EAFR', 2, 0, 0, NULL, 10000001, '2026-03-17 16:42:24', '2026-03-17 16:41:46', '2026-03-17 16:41:46', NULL, NULL);
-INSERT INTO `goods` VALUES (105, '1', '1', '11', 1, 1, 1, 1, 10000003, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773746765513-pc-dongman-copy.png\"]', 'EX-武汉-20260317-B2LJ', 1, 0, 0, NULL, 10000001, '2026-03-17 19:26:48', '2026-03-17 19:26:06', '2026-03-17 19:26:06', NULL, NULL);
-INSERT INTO `goods` VALUES (106, '13', '321', '321', 1, 1, 0, 0, 10000003, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773746862865-屏幕截图 2026-03-17 185714.png\"]', NULL, 0, 0, 0, NULL, NULL, NULL, '2026-03-17 19:27:43', '2026-03-17 19:27:43', NULL, NULL);
+INSERT INTO `goods` VALUES ('巴纳夫卡拉斯来看你了吗vl安家费阿萨 阿萨的撒的撒', '321', NULL, 1, 3, 1, 1, 10000003, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773493633213-屏幕截图 2025-01-02 210311.png\"]', 'EX-武汉-20260314-IRYO', 170, 0, 0, NULL, NULL, '2026-03-14 21:09:15', '2026-03-14 21:07:14', '2026-03-17 08:18:26', NULL, NULL);
+INSERT INTO `goods` VALUES ('给老婆奥氮平的历史怕【上了股票【三大流派【舍得离开as暗杀阿萨啊收到是的卡上打开电视了阿斯顿法定', '312', NULL, 1, 3, 1, 1, 10000002, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773498127167-2459460183.jpg\"]', 'EX-武汉-20260314-MRUZ', 239, 0, 0, NULL, NULL, '2026-03-14 22:23:26', '2026-03-14 22:22:08', '2026-03-17 08:18:26', NULL, NULL);
+INSERT INTO `goods` VALUES ('312', '321', NULL, 1, 3, 1, 1, 10000003, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1b3cbfb35fb941e1a6d3acfcb2e06d17.jpg\"]', 'EX-武汉-20260316-YT0K', 11, 0, 0, NULL, NULL, '2026-03-16 11:44:02', '2026-03-16 11:43:51', '2026-03-17 08:18:26', NULL, NULL);
+INSERT INTO `goods` VALUES ('3321312', '312', NULL, 1, 3, 1, 1, 10000002, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773632650247-wallhaven-k88yd7.jpg\"]', 'EX-武汉-20260316-WQSE', 65, 0, 0, NULL, NULL, '2026-03-16 11:44:26', '2026-03-16 11:44:11', '2026-03-17 08:18:26', NULL, NULL);
+INSERT INTO `goods` VALUES ('该发明了开了个收到固定更发达啊啊的啊大大发v从vccv是 ', '111', NULL, 1, 7, 1, 2, 10000003, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773643864961-wallhaven-3qqqwd.jpg\"]', 'EX-武汉-20260316-W8W6', 14, 0, 0, NULL, 10000001, '2026-03-16 14:57:33', '2026-03-16 14:51:07', '2026-03-16 15:46:03', '2026-03-16 15:09:03', NULL);
+INSERT INTO `goods` VALUES ('3asda 0328239 uiok mn329 ufewewew   ', '31231', NULL, 1, 7, 1, 2, 10000002, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773643879677-wallhaven-dpxxy3.png\"]', 'EX-武汉-20260316-ZDQK', 55, 0, 0, NULL, 10000001, '2026-03-16 14:57:38', '2026-03-16 14:51:21', '2026-03-17 08:13:56', '2026-03-16 15:09:02', NULL);
+INSERT INTO `goods` VALUES ('大山里面课件撒啊啊哇大大达到啊 a', '提高到三十\n', NULL, 3, 10, 1, 1, 10000001, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/46fca3138279451e808514ba8b56a0fc.jpg\"]', 'EX-武汉-20260316-7ASC', 25, 1, 1, NULL, 10000001, '2026-03-16 15:58:24', '2026-03-16 15:58:20', '2026-03-16 15:58:20', NULL, NULL);
+INSERT INTO `goods` VALUES ('adkakdla', '312', '312', 1, 7, 1, 0, 10000002, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773647952909-2459460183.jpg\"]', 'EX-武汉-20260316-0FNA', 16, 0, 0, NULL, 10000001, '2026-03-16 15:59:29', '2026-03-16 15:59:14', '2026-03-17 12:59:24', NULL, NULL);
+INSERT INTO `goods` VALUES ('你哪来的这么多图片', '312', '312', 1, 7, 1, 1, 10000003, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773647969300-wallhaven-gww6wl.png\"]', 'EX-武汉-20260316-LDZ9', 18, 0, 0, NULL, 10000001, '2026-03-16 16:01:58', '2026-03-16 15:59:30', '2026-03-16 16:03:42', NULL, NULL);
+INSERT INTO `goods` VALUES ('312', '312', '321', 1, 1, 1, 1, 10000004, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773650569084-wallhaven-rqqw2q.jpg\"]', 'EX-武汉-20260316-0N00', 61, 0, 0, NULL, 10000001, '2026-03-16 16:43:31', '2026-03-16 16:42:50', '2026-03-16 16:42:50', NULL, NULL);
+INSERT INTO `goods` VALUES ('231', '312', '312', 1, 1, 1, 1, 10000003, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773712104870-wallhaven-k88yd7.jpg\"]', 'EX-武汉-20260317-E2OE', 13, 0, 0, NULL, 10000001, '2026-03-17 10:19:53', '2026-03-17 09:48:26', '2026-03-17 09:48:26', NULL, NULL);
+INSERT INTO `goods` VALUES ('而阿尔巴人', '1111111111', '无', 1, 1, 1, 1, 10000004, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773736904778-屏幕截图 2026-03-17 151415.png\"]', 'EX-武汉-20260317-EAFR', 2, 0, 0, NULL, 10000001, '2026-03-17 16:42:24', '2026-03-17 16:41:46', '2026-03-17 16:41:46', NULL, NULL);
+INSERT INTO `goods` VALUES ('1', '1', '11', 1, 1, 1, 1, 10000003, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773746765513-pc-dongman-copy.png\"]', 'EX-武汉-20260317-B2LJ', 1, 0, 0, NULL, 10000001, '2026-03-17 19:26:48', '2026-03-17 19:26:06', '2026-03-17 19:26:06', NULL, NULL);
+INSERT INTO `goods` VALUES ('13', '321', '321', 1, 1, 0, 0, 10000003, '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/goods/1773746862865-屏幕截图 2026-03-17 185714.png\"]', NULL, 0, 0, 0, NULL, NULL, NULL, '2026-03-17 19:27:43', '2026-03-17 19:27:43', NULL, NULL);
 
 -- ----------------------------
 -- Table structure for goods_categories
@@ -423,38 +170,38 @@ CREATE TABLE `goods_categories`  (
 -- ----------------------------
 -- Records of goods_categories
 -- ----------------------------
-INSERT INTO `goods_categories` VALUES (1, '数码产品', 'digital', 1, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (2, '手机通讯', 'mobile', 2, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (3, '电脑办公', 'computer', 3, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (4, '摄影摄像', 'camera', 4, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (5, '智能设备', 'smart_device', 5, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (6, '图书文具', 'books', 10, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (7, '教材教辅', 'textbook', 11, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (8, '考研资料', 'exam_material', 12, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (9, '文具用品', 'stationery', 13, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (10, '乐器音像', 'music', 14, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (11, '家居生活', 'home', 20, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (12, '家具家电', 'furniture', 21, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (13, '厨房用品', 'kitchen', 22, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (14, '床上用品', 'bedding', 23, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (15, '日用百货', 'daily', 24, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (16, '服饰鞋包', 'fashion', 30, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (17, '男装', 'mens_wear', 31, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (18, '女装', 'womens_wear', 32, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (19, '鞋靴', 'shoes', 33, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (20, '箱包配饰', 'bags', 34, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (21, '运动户外', 'sports', 40, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (22, '运动器材', 'sports_equipment', 41, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (23, '自行车', 'bicycle', 42, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (24, '户外装备', 'outdoor', 43, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (25, '运动服饰', 'sportswear', 44, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (26, '美妆个护', 'beauty', 50, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (27, '护肤品', 'skincare', 51, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (28, '彩妆', 'makeup', 52, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (29, '个人护理', 'personal_care', 53, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (30, '玩具手办', 'toys', 60, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (31, '宠物用品', 'pet', 61, 1, '2026-03-12 13:39:55');
-INSERT INTO `goods_categories` VALUES (32, '其他闲置', 'other', 99, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('数码产品', 'digital', 1, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('手机通讯', 'mobile', 2, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('电脑办公', 'computer', 3, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('摄影摄像', 'camera', 4, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('智能设备', 'smart_device', 5, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('图书文具', 'books', 10, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('教材教辅', 'textbook', 11, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('考研资料', 'exam_material', 12, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('文具用品', 'stationery', 13, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('乐器音像', 'music', 14, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('家居生活', 'home', 20, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('家具家电', 'furniture', 21, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('厨房用品', 'kitchen', 22, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('床上用品', 'bedding', 23, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('日用百货', 'daily', 24, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('服饰鞋包', 'fashion', 30, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('男装', 'mens_wear', 31, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('女装', 'womens_wear', 32, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('鞋靴', 'shoes', 33, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('箱包配饰', 'bags', 34, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('运动户外', 'sports', 40, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('运动器材', 'sports_equipment', 41, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('自行车', 'bicycle', 42, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('户外装备', 'outdoor', 43, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('运动服饰', 'sportswear', 44, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('美妆个护', 'beauty', 50, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('护肤品', 'skincare', 51, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('彩妆', 'makeup', 52, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('个人护理', 'personal_care', 53, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('玩具手办', 'toys', 60, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('宠物用品', 'pet', 61, 1, '2026-03-12 13:39:55');
+INSERT INTO `goods_categories` VALUES ('其他闲置', 'other', 99, 1, '2026-03-12 13:39:55');
 
 -- ----------------------------
 -- Table structure for messages
@@ -568,12 +315,12 @@ CREATE TABLE `orders`  (
 -- ----------------------------
 -- Records of orders
 -- ----------------------------
-INSERT INTO `orders` VALUES (27, 'ORD-1773506567451-389', NULL, 'completed', 10000003, 91, 10000002, 92, NULL, 1, 1, '我想和你交换 13', NULL, NULL, '2026-03-15 00:42:47', '2026-03-17 11:18:27', '2026-03-17 11:18:27', NULL, NULL, '[5]321', NULL, NULL, NULL, '2026-03-17 11:16:25', NULL);
-INSERT INTO `orders` VALUES (28, 'ORD-1773632671526-579', NULL, 'completed', 10000002, 94, 10000003, 93, NULL, 1, 1, '我想和你交换 312', NULL, NULL, '2026-03-16 11:44:32', '2026-03-16 14:46:15', '2026-03-16 14:46:14', NULL, NULL, '[5]3213', 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/violations/10000002-1773747668526-pc-dongman-copy.png', '[5]3123', 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/violations/10000003-1773747683221-屏幕截图 2025-01-02 191057.png', '2026-03-17 19:41:10', '2026-03-17 19:41:23');
-INSERT INTO `orders` VALUES (35, 'ORD-1773644826956-496', NULL, 'completed', 10000002, 96, 10000003, 95, NULL, 1, 1, '我想和你交换 311', NULL, NULL, '2026-03-16 15:07:07', '2026-03-17 18:26:02', '2026-03-17 18:26:02', NULL, NULL, NULL, NULL, '[5]31', 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/violations/10000003-1773714968873-wallhaven-k88yd7.jpg', NULL, '2026-03-17 10:36:14');
-INSERT INTO `orders` VALUES (36, 'ORD-1773647985586-299', NULL, 'cancelled', 10000002, 99, 10000001, 98, NULL, 0, 0, '我想和你交换 大山里面课件撒啊啊哇大大达到啊 a', NULL, NULL, '2026-03-16 15:59:46', '2026-03-17 16:46:19', NULL, '2026-03-17 16:46:19', NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO `orders` VALUES (37, 'ORD-1773648127268-657', NULL, 'cancelled', 10000003, 100, 10000001, 98, NULL, 0, 0, '我想和你交换 大山里面课件撒啊啊哇大大达到啊 a', NULL, NULL, '2026-03-16 16:02:07', '2026-03-16 16:02:07', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO `orders` VALUES (38, 'ORD-1773650625691-167', NULL, 'pending', 10000004, 101, 10000001, 98, NULL, 0, 0, '我想和你交换 大山里面课件撒啊啊哇大大达到啊 a', NULL, NULL, '2026-03-16 16:43:46', '2026-03-16 16:43:46', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `orders` VALUES ('ORD-1773506567451-389', NULL, 'completed', 10000003, 91, 10000002, 92, NULL, 1, 1, '我想和你交换 13', NULL, NULL, '2026-03-15 00:42:47', '2026-03-17 11:18:27', '2026-03-17 11:18:27', NULL, NULL, '[5]321', NULL, NULL, NULL, '2026-03-17 11:16:25', NULL);
+INSERT INTO `orders` VALUES ('ORD-1773632671526-579', NULL, 'completed', 10000002, 94, 10000003, 93, NULL, 1, 1, '我想和你交换 312', NULL, NULL, '2026-03-16 11:44:32', '2026-03-16 14:46:15', '2026-03-16 14:46:14', NULL, NULL, '[5]3213', 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/violations/10000002-1773747668526-pc-dongman-copy.png', '[5]3123', 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/violations/10000003-1773747683221-屏幕截图 2025-01-02 191057.png', '2026-03-17 19:41:10', '2026-03-17 19:41:23');
+INSERT INTO `orders` VALUES ('ORD-1773644826956-496', NULL, 'completed', 10000002, 96, 10000003, 95, NULL, 1, 1, '我想和你交换 311', NULL, NULL, '2026-03-16 15:07:07', '2026-03-17 18:26:02', '2026-03-17 18:26:02', NULL, NULL, NULL, NULL, '[5]31', 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/violations/10000003-1773714968873-wallhaven-k88yd7.jpg', NULL, '2026-03-17 10:36:14');
+INSERT INTO `orders` VALUES ('ORD-1773647985586-299', NULL, 'cancelled', 10000002, 99, 10000001, 98, NULL, 0, 0, '我想和你交换 大山里面课件撒啊啊哇大大达到啊 a', NULL, NULL, '2026-03-16 15:59:46', '2026-03-17 16:46:19', NULL, '2026-03-17 16:46:19', NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `orders` VALUES ('ORD-1773648127268-657', NULL, 'cancelled', 10000003, 100, 10000001, 98, NULL, 0, 0, '我想和你交换 大山里面课件撒啊啊哇大大达到啊 a', NULL, NULL, '2026-03-16 16:02:07', '2026-03-16 16:02:07', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `orders` VALUES ('ORD-1773650625691-167', NULL, 'pending', 10000004, 101, 10000001, 98, NULL, 0, 0, '我想和你交换 大山里面课件撒啊啊哇大大达到啊 a', NULL, NULL, '2026-03-16 16:43:46', '2026-03-16 16:43:46', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- ----------------------------
 -- Table structure for user_id_sequence
@@ -589,7 +336,7 @@ CREATE TABLE `user_id_sequence`  (
 -- ----------------------------
 -- Records of user_id_sequence
 -- ----------------------------
-INSERT INTO `user_id_sequence` VALUES (10000042, 'a');
+INSERT INTO `user_id_sequence` VALUES ('a');
 
 -- ----------------------------
 -- Table structure for user_login_logs
@@ -822,6 +569,7 @@ CREATE TABLE `users`  (
   `login_attempts` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '连续登录失败次数',
   `locked_until` timestamp NULL DEFAULT NULL COMMENT '账户锁定截止时间',
   `deleted_at` timestamp NULL DEFAULT NULL COMMENT '软删除时间',
+  `theme_preference` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT 'default' COMMENT '用户主题偏好',
   PRIMARY KEY (`user_id`) USING BTREE,
   UNIQUE INDEX `uk_username`(`username`) USING BTREE COMMENT '用户名唯一索引',
   UNIQUE INDEX `uk_email`(`email`) USING BTREE COMMENT '邮箱唯一索引',
@@ -840,16 +588,7 @@ CREATE TABLE `users`  (
 -- ----------------------------
 -- Records of users
 -- ----------------------------
-INSERT INTO `users` VALUES (10000001, 'admin', '$2a$10$EblZqNptyYvcLm/VwDCVAuBjzZOI7khzdyGPBr08PpIi0na624b8.', 'admin@campus-exchange.com', NULL, 1, 1, 80, 0, NULL, NULL, '系统管理员', 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/avatar/10000001/3c08c049293348ff91df39a0657c98cc.jpg', '湖北省', '武汉工程大学', 1, NULL, '2026-03-12 13:39:56', '2026-03-18 00:58:01', '2026-03-18 00:58:01', 0, NULL, NULL);
-INSERT INTO `users` VALUES (10000002, 'chenpingye', '$2a$10$kSMNynSZleakyYHudFF/qO96Eewrl0moEUJh.0mQtFFnSb4dlNLtO', 'abc402qua@winvvv.com', '15605060708', 2, 1, 80, 0, NULL, NULL, '陈品烨', 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/avatar/10000002/99e542e993384de69aea42a7464c4200.jpg', '湖北省', '武汉工程大学', NULL, NULL, '2026-03-12 21:52:14', '2026-03-17 06:22:56', '2026-03-17 19:40:50', 0, NULL, NULL);
-INSERT INTO `users` VALUES (10000003, 'yangtianbo', '$2a$10$4WKJ1XiqQgjdliV4RD9GX./xRWHzbJn0WsiYmLMY7072dFQ007Qva', 'abc40321a@winvvv.com', '17205060708', 2, 2, 80, 0, NULL, NULL, '杨天波', 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/avatars/10000003-1773587975037-2459460183.jpg', '湖北省', '武汉工程大学', NULL, NULL, '2026-03-12 21:56:48', '2026-03-17 15:17:13', '2026-03-17 19:20:35', 0, NULL, NULL);
-INSERT INTO `users` VALUES (10000004, 'shizheyuan', '$2a$10$z5y1Viipm43LDJ0XHbWEiuC4JwSsfTzIz5AF6fLum49R./Uvtj8eW', 'abc42qua@winvvv.com', '17615060708', 2, 2, 80, 0, NULL, NULL, NULL, 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/avatar/10000004/f8a9beb2ca2f4ac0b1374241fce7e7e7.jpg', '湖北省', '武汉工程大学', NULL, NULL, '2026-03-12 21:57:49', '2026-03-15 16:35:14', '2026-03-17 21:13:31', 0, NULL, NULL);
-INSERT INTO `users` VALUES (10000037, '范吉奥', '$2a$10$ejgwIprEg.5/tgnfSJxL2uknKhYnc5ZyZJqmR9gTiVEwqHVeEQzcm', 'a2402qua@winvvv.com', '14323242432', 2, 1, 80, 0, NULL, NULL, NULL, NULL, '北京市', '北京大学', NULL, NULL, '2026-03-17 10:40:52', '2026-03-17 10:40:52', NULL, 0, NULL, NULL);
-INSERT INTO `users` VALUES (10000038, '熊大', '$2a$10$OMvQSXxlZ6tqAoL8nsE2aOrGZE63u1zBQGVKTjWbZDgpxOivMbf8e', 'xiongda@qq.com', '17837833243', 2, 1, 80, 0, NULL, NULL, NULL, NULL, '狗熊林', '狗熊林大学', NULL, NULL, '2026-03-17 10:42:05', '2026-03-17 10:42:05', NULL, 0, NULL, NULL);
-INSERT INTO `users` VALUES (10000039, '熊二', '$2a$10$hfPqvi84LUnn92XdrqLJw.Id8JbhLcQgc0whiVQV5iI2A20L.flfC', 'a32bc402qua@winvvv.com', '15805060708', 2, 1, 80, 0, NULL, NULL, NULL, NULL, '狗熊林', '狗熊林大学', NULL, NULL, '2026-03-17 15:57:50', '2026-03-17 15:57:50', NULL, 0, NULL, NULL);
-INSERT INTO `users` VALUES (10000040, '小明', '$2a$10$GNRN5PqjDSeJEXMN1dC9IO78Hrk0LRN6CMdFAKdfilZLjAI0eCvDO', '21321321@qq.com', '17605260708', 2, 2, 80, 0, NULL, NULL, NULL, NULL, '加里沌', '加里沌大学', NULL, NULL, '2026-03-17 15:59:12', '2026-03-17 15:59:12', NULL, 0, NULL, NULL);
-INSERT INTO `users` VALUES (10000041, '李四', '$2a$10$292LWLtWO88YA8qMBPSIi.JDElApMXpOEymq8SvdBrV00UfYeeSt.', 'c4dada02ua@winvvv.com', '14832983938', 2, 1, 80, 0, NULL, NULL, NULL, NULL, '北京', '清华大学', NULL, NULL, '2026-03-17 16:00:50', '2026-03-17 16:00:50', NULL, 0, NULL, NULL);
-INSERT INTO `users` VALUES (10000042, 'select * from user', '$2a$10$U6YB73GjK1A7iiCHcQlzuOqZ/zmWn3rpgCFnvGj60o6KHvJ9ngcyu', 'fac402qua@winvvv.com', '17605960708', 2, 1, 80, 0, NULL, NULL, NULL, NULL, '湖北省', '清华大学', NULL, NULL, '2026-03-17 16:02:01', '2026-03-17 16:02:01', NULL, 0, NULL, NULL);
+INSERT INTO `users` VALUES ('admin', '$2a$10$EblZqNptyYvcLm/VwDCVAuBjzZOI7khzdyGPBr08PpIi0na624b8.', 'admin@campus-exchange.com', NULL, 1, 1, 80, 0, NULL, NULL, '系统管理员', 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/avatar/10000001/3c08c049293348ff91df39a0657c98cc.jpg', '湖北省', '武汉工程大学', 1, NULL, '2026-03-12 13:39:56', '2026-03-18 00:58:01', '2026-03-18 00:58:01', 0, NULL, NULL, 'default');
 
 -- ----------------------------
 -- Table structure for violation_report_logs
@@ -929,10 +668,10 @@ CREATE TABLE `violation_reports`  (
 -- ----------------------------
 -- Records of violation_reports
 -- ----------------------------
-INSERT INTO `violation_reports` VALUES (1, 'VR-1773710776149-1780', 'product', 101, '312', 10000003, 'product-fake', '321', '321', '312', NULL, 'approved', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-17 09:26:16', '2026-03-17 10:00:26', NULL, NULL);
-INSERT INTO `violation_reports` VALUES (2, 'VR-1773711793272-6107', 'product', 101, '312', 10000003, 'product-fake', '31', '321', '312', '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/violations/10000003-1773711791076-pc-dongman-copy.png\"]', 'rejected', 10000001, NULL, NULL, '不会说话', NULL, NULL, NULL, '2026-03-17 09:43:13', '2026-03-17 09:52:10', '2026-03-17 09:52:10', NULL);
-INSERT INTO `violation_reports` VALUES (3, 'VR-1773713942167-1431', 'product', 101, '312', 10000003, 'product-fake', '432', '423423', '4234', '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/violations/10000003-1773713939113-wallhaven-rqqw2q.jpg\"]', 'approved', 10000001, 'removeProduct', '', NULL, NULL, NULL, NULL, '2026-03-17 10:19:02', '2026-03-17 10:19:27', '2026-03-17 10:19:27', NULL);
-INSERT INTO `violation_reports` VALUES (4, 'VR-1773714090357-5315', 'product', 101, '312', 10000003, 'product-fake', '321', '321', '321', NULL, 'approved', 10000001, 'removeProduct', '', NULL, NULL, NULL, NULL, '2026-03-17 10:21:30', '2026-03-17 10:30:34', '2026-03-17 10:30:34', NULL);
+INSERT INTO `violation_reports` VALUES ('VR-1773710776149-1780', 'product', 101, '312', 10000003, 'product-fake', '321', '321', '312', NULL, 'approved', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-17 09:26:16', '2026-03-17 10:00:26', NULL, NULL);
+INSERT INTO `violation_reports` VALUES ('VR-1773711793272-6107', 'product', 101, '312', 10000003, 'product-fake', '31', '321', '312', '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/violations/10000003-1773711791076-pc-dongman-copy.png\"]', 'rejected', 10000001, NULL, NULL, '不会说话', NULL, NULL, NULL, '2026-03-17 09:43:13', '2026-03-17 09:52:10', '2026-03-17 09:52:10', NULL);
+INSERT INTO `violation_reports` VALUES ('VR-1773713942167-1431', 'product', 101, '312', 10000003, 'product-fake', '432', '423423', '4234', '[\"https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/violations/10000003-1773713939113-wallhaven-rqqw2q.jpg\"]', 'approved', 10000001, 'removeProduct', '', NULL, NULL, NULL, NULL, '2026-03-17 10:19:02', '2026-03-17 10:19:27', '2026-03-17 10:19:27', NULL);
+INSERT INTO `violation_reports` VALUES ('VR-1773714090357-5315', 'product', 101, '312', 10000003, 'product-fake', '321', '321', '321', NULL, 'approved', 10000001, 'removeProduct', '', NULL, NULL, NULL, NULL, '2026-03-17 10:21:30', '2026-03-17 10:30:34', '2026-03-17 10:30:34', NULL);
 
 -- ----------------------------
 -- Procedure structure for generate_user_id
@@ -978,3 +717,73 @@ CREATE TABLE `exchange_proofs` (
   PRIMARY KEY (`proof_id`),
   INDEX `idx_order_id` (`order_id`)
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '交换凭证表';
+-- ----------------------------
+-- 主题配置表
+-- ----------------------------
+DROP TABLE IF EXISTS `themes`;
+CREATE TABLE `themes` (
+  `theme_id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主题ID',
+  `theme_key` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '主题唯一标识',
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '主题名称',
+  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '主题描述',
+  `category` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '分类JSON数组',
+  `tags` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '标签JSON数组',
+  `gradient` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '预览渐变色',
+  `primary_color` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '主色',
+  `sidebar_bg` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '侧边栏背景',
+  `css_variables` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'CSS变量JSON对象',
+  `wallpaper_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '壁纸URL(COS)',
+  `wallpaper_type` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '壁纸类型: video/image',
+  `preview_image_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '主题预览图URL(COS)',
+  `sort_order` int NOT NULL DEFAULT 0 COMMENT '排序',
+  `is_active` tinyint NOT NULL DEFAULT 1 COMMENT '是否启用: 0=禁用, 1=启用',
+  `created_by` int UNSIGNED DEFAULT NULL COMMENT '创建人ID',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`theme_id`),
+  UNIQUE KEY `uk_theme_key` (`theme_key`),
+  INDEX `idx_is_active` (`is_active`),
+  INDEX `idx_sort_order` (`sort_order`)
+) ENGINE = InnoDB AUTO_INCREMENT = 39 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '主题配置表';
+
+-- ----------------------------
+-- Records of themes (migrated from frontend config)
+-- ----------------------------
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (1, 'default', '深蓝色主题', '经典深色科技风格', '["dark","tech"]', '["深色","科技","经典"]', 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', '#0075ff', 'rgba(30, 41, 59, 0.6)', '{"--color-primary":"#0075ff","--color-primary-rgb":"0, 117, 255","--color-secondary-success":"#2dce89","--color-secondary-success-rgb":"45, 206, 137","--color-secondary-warning":"#fb6340","--color-secondary-warning-rgb":"251, 99, 64","--color-secondary-danger":"#f5365c","--color-secondary-danger-rgb":"245, 54, 92","--color-secondary-info":"#11cdef","--color-secondary-info-rgb":"17, 205, 239","--color-bg-page":"#0f172a","--color-bg-surface":"#1e293b","--color-border":"#334155","--color-text-primary":"#f8fafc","--color-text-secondary":"#94a3b8","--color-text-disabled":"#475569","--color-sidebar-user-card-bg":"#1e293b","--color-nav-active-bg":"#0075ff","--color-nav-active-text":"#ffffff","--color-pill-bg":"#1e293b","--color-pill-active-bg":"#0075ff","--color-pill-active-text":"#ffffff","--glass-bg":"rgba(30, 41, 59, 0.7)","--glass-border":"rgba(255, 255, 255, 0.1)","--glass-shadow":"0 8px 32px 0 rgba(0, 0, 0, 0.37)","--glass-blur":"20px","--card-bg":"rgba(30, 41, 59, 0.8)","--card-border":"rgba(255, 255, 255, 0.05)","--card-shadow":"0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"}', NULL, NULL, 10, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (2, 'dark-gold', '暗黑金主题', '奢华高端黑金配色', '["dark","luxury"]', '["深色","奢华","高端"]', 'linear-gradient(135deg, #0A0A0A 0%, #1A1A1A 100%)', '#D4AF37', 'rgba(26, 26, 26, 0.7)', '{"--color-primary":"#D4AF37","--color-primary-rgb":"212, 175, 55","--color-bg-page":"#0A0A0A","--color-bg-surface":"#1A1A1A","--color-border":"#333333","--color-sidebar-user-card-bg":"rgba(26, 26, 26, 0.8)","--color-nav-active-bg":"#D4AF37","--color-nav-active-text":"#0A0A0A","--color-pill-bg":"rgba(26, 26, 26, 0.8)","--color-pill-active-bg":"#D4AF37","--color-pill-active-text":"#0A0A0A","--glass-bg":"rgba(26, 26, 26, 0.7)","--glass-border":"rgba(212, 175, 55, 0.15)","--card-bg":"rgba(26, 26, 26, 0.8)","--card-border":"rgba(212, 175, 55, 0.1)"}', NULL, NULL, 20, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (3, 'cyberpunk', '赛博朋克主题', '未来科幻霓虹灯风格', '["dark","tech"]', '["深色","科幻","霓虹"]', 'linear-gradient(135deg, #0D0221 0%, #1A0B2E 100%)', '#FF00FF', 'rgba(26, 11, 46, 0.6)', '{"--color-primary":"#FF00FF","--color-primary-rgb":"255, 0, 255","--color-secondary-success":"#00FF9D","--color-secondary-warning":"#FFE600","--color-secondary-danger":"#FF0055","--color-bg-page":"#0D0221","--color-bg-surface":"#1A0B2E","--color-border":"#2D1B4E","--color-sidebar-user-card-bg":"rgba(26, 11, 46, 0.7)","--color-nav-active-bg":"#FF00FF","--color-nav-active-text":"#0D0221","--color-pill-bg":"rgba(26, 11, 46, 0.7)","--color-pill-active-bg":"#FF00FF","--color-pill-active-text":"#0D0221","--glass-bg":"rgba(26, 11, 46, 0.6)","--glass-border":"rgba(255, 0, 255, 0.2)","--card-bg":"rgba(26, 11, 46, 0.7)","--card-border":"rgba(255, 0, 255, 0.15)"}', NULL, NULL, 30, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (4, 'neon-night', '霓虹夜市主题', '亚洲街头夜市风格', '["dark","tech"]', '["深色","活力","街头"]', 'linear-gradient(135deg, #08090A 0%, #1A1D23 100%)', '#FF2E63', 'rgba(26, 29, 35, 0.7)', '{"--color-primary":"#FF2E63","--color-primary-rgb":"255, 46, 99","--color-secondary-success":"#08D9D6","--color-bg-page":"#08090A","--color-bg-surface":"#1A1D23","--color-border":"#2C3038","--color-sidebar-user-card-bg":"rgba(26, 29, 35, 0.8)","--color-nav-active-bg":"#FF2E63","--color-nav-active-text":"#08090A","--color-pill-bg":"rgba(26, 29, 35, 0.8)","--color-pill-active-bg":"#FF2E63","--color-pill-active-text":"#08090A","--glass-bg":"rgba(26, 29, 35, 0.7)","--glass-border":"rgba(255, 46, 99, 0.2)","--card-bg":"rgba(26, 29, 35, 0.8)","--card-border":"rgba(255, 46, 99, 0.15)"}', NULL, NULL, 40, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (5, 'deep-ocean', '深海探索主题', '神秘宁静深海风格', '["dark","nature"]', '["深色","神秘","宁静"]', 'linear-gradient(135deg, #001F3F 0%, #003D5C 100%)', '#00CED1', 'rgba(0, 61, 92, 0.6)', '{"--color-primary":"#00CED1","--color-primary-rgb":"0, 206, 209","--color-bg-page":"#001F3F","--color-bg-surface":"#003366","--color-border":"#004080","--color-sidebar-user-card-bg":"rgba(0, 51, 102, 0.7)","--color-nav-active-bg":"#00CED1","--color-nav-active-text":"#001F3F","--color-pill-bg":"rgba(0, 51, 102, 0.7)","--color-pill-active-bg":"#00CED1","--color-pill-active-text":"#001F3F","--glass-bg":"rgba(0, 51, 102, 0.6)","--glass-border":"rgba(0, 206, 209, 0.2)","--card-bg":"rgba(0, 51, 102, 0.7)","--card-border":"rgba(0, 206, 209, 0.15)"}', NULL, NULL, 50, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (6, 'aurora', '北极光主题', '梦幻极光流动风格', '["dark","nature"]', '["深色","梦幻","极光"]', 'linear-gradient(135deg, #0A1128 0%, #1C2541 100%)', '#00FFA3', 'rgba(28, 37, 65, 0.6)', '{"--color-primary":"#00FFA3","--color-primary-rgb":"0, 255, 163","--color-secondary-info":"#6C63FF","--color-bg-page":"#0A1128","--color-bg-surface":"#1C2541","--color-border":"#3A506B","--glass-bg":"rgba(28, 37, 65, 0.6)","--glass-border":"rgba(0, 255, 163, 0.2)","--glass-shadow":"0 8px 32px 0 rgba(0, 255, 163, 0.2), 0 0 60px 0 rgba(108, 99, 255, 0.15)","--glass-blur":"24px","--card-bg":"rgba(28, 37, 65, 0.6)","--card-border":"rgba(0, 255, 163, 0.25)","--card-shadow":"0 8px 32px 0 rgba(0, 255, 163, 0.25), 0 0 70px 0 rgba(108, 99, 255, 0.2)"}', NULL, NULL, 60, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (7, 'iced-americano', '冰美式主题', '沉稳提神咖啡色调', '["dark","luxury"]', '["深色","沉稳","咖啡"]', 'linear-gradient(135deg, #1A1512 0%, #2C241F 100%)', '#C69F7F', 'rgba(44, 36, 31, 0.6)', '{"--color-primary":"#C69F7F","--color-primary-rgb":"198, 159, 127","--color-bg-page":"#1A1512","--color-bg-surface":"#2C241F","--color-border":"#3E342E","--color-sidebar-user-card-bg":"rgba(44, 36, 31, 0.7)","--color-nav-active-bg":"#C69F7F","--color-nav-active-text":"#1A1512","--color-pill-bg":"rgba(44, 36, 31, 0.7)","--color-pill-active-bg":"#C69F7F","--color-pill-active-text":"#1A1512","--glass-bg":"rgba(44, 36, 31, 0.6)","--glass-border":"rgba(198, 159, 127, 0.2)","--card-bg":"rgba(44, 36, 31, 0.7)","--card-border":"rgba(198, 159, 127, 0.15)"}', NULL, NULL, 70, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (8, 'purple', '浅紫色主题', '清新明亮办公风格', '["light"]', '["浅色","清新","办公"]', 'linear-gradient(135deg, #F7F8FC 0%, #E4D7FF 100%)', '#6C5DD3', 'rgba(255, 255, 255, 0.45)', '{"--color-primary":"#6C5DD3","--color-primary-rgb":"108, 93, 211","--color-secondary-success":"#45B36B","--color-secondary-warning":"#FFAD33","--color-secondary-danger":"#EF466F","--color-secondary-info":"#3E8BFF","--color-bg-page":"#F7F8FC","--color-bg-surface":"#FFFFFF","--color-border":"#E4E8F0","--color-text-primary":"#11142D","--color-text-secondary":"#808191","--color-text-disabled":"#B2B3BD","--color-sidebar-user-card-bg":"#F0F2F5","--color-nav-active-bg":"#6C5DD3","--color-nav-active-text":"#FFFFFF","--color-pill-bg":"#F0F2F5","--color-pill-active-bg":"#6C5DD3","--glass-bg":"rgba(255, 255, 255, 0.45)","--glass-border":"rgba(255, 255, 255, 0.8)","--glass-shadow":"0 8px 32px 0 rgba(31, 38, 135, 0.07)","--card-bg":"rgba(255, 255, 255, 0.6)","--card-border":"rgba(255, 255, 255, 0.7)","--card-shadow":"0 4px 6px -1px rgba(0, 0, 0, 0.02)"}', NULL, NULL, 80, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (9, 'sakura', '樱花季主题', '浪漫温柔日系风格', '["light","nature"]', '["浅色","浪漫","日系"]', 'linear-gradient(135deg, #FFF5F7 0%, #FFE4E9 100%)', '#FF69B4', 'rgba(255, 255, 255, 0.6)', '{"--color-primary":"#FF69B4","--color-primary-rgb":"255, 105, 180","--color-bg-page":"#FFF5F7","--color-bg-surface":"#FFFFFF","--color-border":"#FFD1DC","--color-text-primary":"#4A4A4A","--color-text-secondary":"#8E8E8E","--color-sidebar-user-card-bg":"#FFE4E9","--color-nav-active-bg":"#FF69B4","--color-nav-active-text":"#FFFFFF","--color-pill-bg":"#FFE4E9","--color-pill-active-bg":"#FF69B4","--color-pill-active-text":"#FFFFFF","--glass-bg":"rgba(255, 255, 255, 0.6)","--glass-border":"rgba(255, 105, 180, 0.2)","--card-bg":"rgba(255, 255, 255, 0.7)","--card-border":"rgba(255, 105, 180, 0.15)"}', NULL, NULL, 90, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (10, 'mint-ice', '薄荷冰沙主题', '清凉舒适夏日风格', '["light","nature"]', '["浅色","清凉","夏日"]', 'linear-gradient(135deg, #F0FFFF 0%, #E0F2F1 100%)', '#00D9C0', 'rgba(255, 255, 255, 0.7)', '{"--color-primary":"#00D9C0","--color-primary-rgb":"0, 217, 192","--color-secondary-success":"#00E676","--color-secondary-warning":"#FFB74D","--color-secondary-warning-rgb":"255, 183, 77","--color-secondary-danger":"#FF5252","--color-secondary-info":"#40C4FF","--color-bg-page":"#F0FFFF","--color-bg-surface":"#FFFFFF","--color-border":"#B2DFDB","--color-text-primary":"#004D40","--color-text-secondary":"#00796B","--color-text-disabled":"#80CBC4","--color-sidebar-user-card-bg":"#E0F2F1","--color-nav-active-bg":"#B2DFDB","--color-nav-active-text":"#004D40","--color-pill-bg":"#E0F2F1","--color-pill-active-bg":"#B2DFDB","--color-pill-active-text":"#004D40","--glass-bg":"rgba(255, 255, 255, 0.6)","--glass-border":"rgba(0, 217, 192, 0.25)","--card-bg":"rgba(255, 255, 255, 0.7)","--card-border":"rgba(0, 217, 192, 0.2)"}', NULL, NULL, 100, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (11, 'yellow', '暖黄色主题', '温暖活力琥珀色调', '["light","nature"]', '["浅色","温暖","活力"]', 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)', '#F59E0B', 'rgba(255, 255, 255, 0.6)', '{"--color-primary":"#F59E0B","--color-primary-rgb":"245, 158, 11","--color-bg-page":"#FFFBEB","--color-bg-surface":"#FFFFFF","--color-border":"#FDE68A","--color-text-primary":"#451A03","--color-text-secondary":"#92400E","--color-sidebar-user-card-bg":"#FEF3C7","--color-nav-active-bg":"#F59E0B","--color-nav-active-text":"#FFFFFF","--color-pill-bg":"#FEF3C7","--color-pill-active-bg":"#F59E0B","--color-pill-active-text":"#FFFFFF","--glass-bg":"rgba(255, 255, 255, 0.6)","--glass-border":"rgba(245, 158, 11, 0.2)","--card-bg":"rgba(255, 255, 255, 0.7)","--card-border":"rgba(245, 158, 11, 0.15)"}', NULL, NULL, 110, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (12, 'green', '清新绿色主题', '自然环保健康风格', '["light","nature"]', '["浅色","自然","健康"]', 'linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)', '#059669', 'rgba(255, 255, 255, 0.6)', '{"--color-primary":"#059669","--color-primary-rgb":"5, 150, 105","--color-bg-page":"#F0FDF4","--color-bg-surface":"#FFFFFF","--color-border":"#BBF7D0","--color-text-primary":"#064E3B","--color-text-secondary":"#047857","--color-sidebar-user-card-bg":"#D1FAE5","--color-nav-active-bg":"#059669","--color-nav-active-text":"#FFFFFF","--color-pill-bg":"#D1FAE5","--color-pill-active-bg":"#059669","--color-pill-active-text":"#FFFFFF","--glass-bg":"rgba(255, 255, 255, 0.6)","--glass-border":"rgba(5, 150, 105, 0.2)","--card-bg":"rgba(255, 255, 255, 0.7)","--card-border":"rgba(5, 150, 105, 0.15)"}', NULL, NULL, 120, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (13, 'red', '热情红色主题', '醒目热情玫瑰红调', '["light"]', '["浅色","热情","醒目"]', 'linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%)', '#E11D48', 'rgba(255, 255, 255, 0.6)', '{"--color-primary":"#E11D48","--color-primary-rgb":"225, 29, 72","--color-bg-page":"#FFF1F2","--color-bg-surface":"#FFFFFF","--color-border":"#FECDD3","--color-text-primary":"#881337","--color-text-secondary":"#BE123C","--color-sidebar-user-card-bg":"#FFE4E6","--color-nav-active-bg":"#E11D48","--color-nav-active-text":"#FFFFFF","--color-pill-bg":"#FFE4E6","--color-pill-active-bg":"#E11D48","--color-pill-active-text":"#FFFFFF","--glass-bg":"rgba(255, 255, 255, 0.6)","--glass-border":"rgba(225, 29, 72, 0.2)","--card-bg":"rgba(255, 255, 255, 0.7)","--card-border":"rgba(225, 29, 72, 0.15)"}', NULL, NULL, 130, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (14, 'orange', '活力橙色主题', '创意活力鲜橙风格', '["light"]', '["浅色","活力","创意"]', 'linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)', '#F97316', 'rgba(255, 255, 255, 0.6)', '{"--color-primary":"#F97316","--color-primary-rgb":"249, 115, 22","--color-bg-page":"#FFF7ED","--color-bg-surface":"#FFFFFF","--color-border":"#FED7AA","--color-text-primary":"#7C2D12","--color-text-secondary":"#C2410C","--color-sidebar-user-card-bg":"#FFEDD5","--color-nav-active-bg":"#F97316","--color-nav-active-text":"#FFFFFF","--color-pill-bg":"#FFEDD5","--color-pill-active-bg":"#F97316","--color-pill-active-text":"#FFFFFF","--glass-bg":"rgba(255, 255, 255, 0.6)","--glass-border":"rgba(249, 115, 22, 0.2)","--card-bg":"rgba(255, 255, 255, 0.7)","--card-border":"rgba(249, 115, 22, 0.15)"}', NULL, NULL, 140, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (15, 'lightblue', '清爽淡蓝主题', '宁静天空清爽色调', '["light","nature"]', '["浅色","清爽","宁静"]', 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)', '#0EA5E9', 'rgba(255, 255, 255, 0.6)', '{"--color-primary":"#0EA5E9","--color-primary-rgb":"14, 165, 233","--color-bg-page":"#F0F9FF","--color-bg-surface":"#FFFFFF","--color-border":"#BAE6FD","--color-text-primary":"#0C4A6E","--color-text-secondary":"#0284C7","--color-sidebar-user-card-bg":"#E0F2FE","--color-nav-active-bg":"#0EA5E9","--color-nav-active-text":"#FFFFFF","--color-pill-bg":"#E0F2FE","--color-pill-active-bg":"#0EA5E9","--color-pill-active-text":"#FFFFFF","--glass-bg":"rgba(255, 255, 255, 0.6)","--glass-border":"rgba(14, 165, 233, 0.2)","--card-bg":"rgba(255, 255, 255, 0.7)","--card-border":"rgba(14, 165, 233, 0.15)"}', NULL, NULL, 150, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (16, 'white', '极简亮白主题', '纯净现代极简风格', '["light"]', '["浅色","极简","现代"]', 'linear-gradient(135deg, #F9FAFB 0%, #FFFFFF 100%)', '#171717', 'rgba(255, 255, 255, 0.8)', '{"--color-primary":"#171717","--color-primary-rgb":"23, 23, 23","--color-bg-page":"#F9FAFB","--color-bg-surface":"#FFFFFF","--color-border":"#E5E7EB","--color-text-primary":"#111827","--color-text-secondary":"#6B7280","--color-sidebar-user-card-bg":"#F3F4F6","--color-nav-active-bg":"#171717","--color-nav-active-text":"#FFFFFF","--color-pill-bg":"#F3F4F6","--color-pill-active-bg":"#171717","--color-pill-active-text":"#FFFFFF","--glass-bg":"rgba(255, 255, 255, 0.8)","--glass-border":"rgba(0, 0, 0, 0.05)","--card-bg":"rgba(255, 255, 255, 0.9)","--card-border":"rgba(0, 0, 0, 0.05)"}', NULL, NULL, 160, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (17, 'rainbow', '梦幻彩虹主题', '多彩梦幻独角兽风格', '["light"]', '["浅色","梦幻","多彩"]', 'linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%)', '#D946EF', 'rgba(255, 255, 255, 0.75)', '{"--color-primary":"#D946EF","--color-primary-rgb":"217, 70, 239","--color-secondary-success":"#10B981","--color-secondary-warning":"#F59E0B","--color-secondary-danger":"#EF4444","--color-secondary-info":"#3B82F6","--color-bg-page":"#FAF5FF","--color-bg-surface":"#FFFFFF","--color-border":"#E9D5FF","--color-text-primary":"#4C1D95","--color-text-secondary":"#7C3AED","--color-sidebar-user-card-bg":"#F3E8FF","--color-nav-active-bg":"#E9D5FF","--color-nav-active-text":"#4C1D95","--color-pill-bg":"#F3E8FF","--color-pill-active-bg":"#D946EF","--glass-bg":"rgba(255, 255, 255, 0.6)","--glass-border":"rgba(217, 70, 239, 0.25)","--glass-blur":"24px","--card-bg":"rgba(255, 255, 255, 0.7)","--card-border":"rgba(217, 70, 239, 0.2)"}', NULL, NULL, 170, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (18, 'galaxy', '星际迷航主题', '深邃神秘星空风格', '["dark","tech","nature"]', '["深色","神秘","星空"]', 'linear-gradient(135deg, #0F172A 0%, #312E81 100%)', '#818CF8', 'rgba(49, 46, 129, 0.6)', '{"--color-primary":"#818CF8","--color-primary-rgb":"129, 140, 248","--color-bg-page":"#0F172A","--color-bg-surface":"#1E293B","--color-border":"#312E81","--color-text-primary":"#E0E7FF","--color-text-secondary":"#A5B4FC","--color-text-disabled":"#6366F1","--color-sidebar-user-card-bg":"rgba(49, 46, 129, 0.4)","--color-nav-active-bg":"#312E81","--color-nav-active-text":"#E0E7FF","--color-pill-bg":"rgba(49, 46, 129, 0.3)","--color-pill-active-bg":"#818CF8","--glass-bg":"rgba(30, 27, 75, 0.6)","--glass-border":"rgba(129, 140, 248, 0.2)","--glass-blur":"24px","--card-bg":"rgba(30, 27, 75, 0.7)","--card-border":"rgba(129, 140, 248, 0.15)"}', NULL, NULL, 180, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (19, 'peach-fuzz', '柔和桃绒主题', '温柔治愈年度流行色', '["light","nature"]', '["浅色","柔和","温暖"]', 'linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)', '#FFBE98', 'rgba(255, 255, 255, 0.6)', '{"--color-primary":"#FFBE98","--color-primary-rgb":"255, 190, 152","--color-secondary-success":"#86EFAC","--color-secondary-warning":"#FDBA74","--color-secondary-danger":"#FDA4AF","--color-secondary-info":"#93C5FD","--color-bg-page":"#FFF7ED","--color-bg-surface":"#FFFFFF","--color-border":"#FFEDD5","--color-text-primary":"#7C2D12","--color-text-secondary":"#9A3412","--color-text-disabled":"#FDBA74","--color-sidebar-user-card-bg":"#FFEDD5","--color-nav-active-bg":"#FFEDD5","--color-nav-active-text":"#7C2D12","--color-pill-bg":"#FFF7ED","--color-pill-active-bg":"#FFBE98","--glass-bg":"rgba(255, 255, 255, 0.6)","--glass-border":"rgba(255, 190, 152, 0.3)","--card-bg":"rgba(255, 255, 255, 0.75)","--card-border":"rgba(255, 190, 152, 0.25)"}', NULL, NULL, 190, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (20, 'teal-waters', '碧水蓝天主题', '清新自然海洋风格', '["dark","nature"]', '["深色","清新","海洋"]', 'linear-gradient(135deg, #042F2E 0%, #115E59 100%)', '#2DD4BF', 'rgba(17, 94, 89, 0.6)', '{"--color-primary":"#2DD4BF","--color-primary-rgb":"45, 212, 191","--color-bg-page":"#042F2E","--color-bg-surface":"#115E59","--color-border":"#134E4A","--color-text-primary":"#CCFBF1","--color-text-secondary":"#5EEAD4","--color-text-disabled":"#2DD4BF","--color-sidebar-user-card-bg":"rgba(19, 78, 74, 0.5)","--color-nav-active-bg":"#134E4A","--color-nav-active-text":"#CCFBF1","--color-pill-bg":"rgba(19, 78, 74, 0.4)","--color-pill-active-bg":"#2DD4BF","--color-pill-active-text":"#042F2E","--glass-bg":"rgba(4, 47, 46, 0.6)","--glass-border":"rgba(45, 212, 191, 0.2)","--card-bg":"rgba(4, 47, 46, 0.7)","--card-border":"rgba(45, 212, 191, 0.15)"}', NULL, NULL, 200, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (21, 'sunset-drive', '日落大道主题', '复古未来落日风格', '["dark","tech"]', '["深色","复古","梦幻"]', 'linear-gradient(135deg, #4C1D95 0%, #BE185D 100%)', '#F472B6', 'rgba(76, 29, 149, 0.6)', '{"--color-primary":"#F472B6","--color-primary-rgb":"244, 114, 182","--color-secondary-success":"#34D399","--color-secondary-warning":"#FBBF24","--color-secondary-danger":"#F87171","--color-secondary-info":"#60A5FA","--color-bg-page":"#4C1D95","--color-bg-surface":"#5B21B6","--color-border":"#6D28D9","--color-text-primary":"#FDF4FF","--color-text-secondary":"#E9D5FF","--color-text-disabled":"#A78BFA","--color-sidebar-user-card-bg":"rgba(91, 33, 182, 0.5)","--color-nav-active-bg":"#6D28D9","--color-nav-active-text":"#FDF4FF","--color-pill-bg":"rgba(91, 33, 182, 0.4)","--color-pill-active-bg":"#F472B6","--color-pill-active-text":"#4C1D95","--glass-bg":"rgba(76, 29, 149, 0.6)","--glass-border":"rgba(244, 114, 182, 0.25)","--glass-blur":"24px","--card-bg":"rgba(76, 29, 149, 0.7)","--card-border":"rgba(244, 114, 182, 0.2)"}', NULL, NULL, 210, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (22, 'matcha-zen', '抹茶禅意主题', '淡雅宁静抹茶风格', '["light","nature"]', '["浅色","自然","清新"]', 'linear-gradient(135deg, #ECFCCB 0%, #D9F99D 100%)', '#65A30D', 'rgba(255, 255, 255, 0.6)', '{"--color-primary":"#65A30D","--color-primary-rgb":"101, 163, 13","--color-secondary-success":"#16A34A","--color-secondary-warning":"#D97706","--color-secondary-danger":"#DC2626","--color-secondary-info":"#0284C7","--color-bg-page":"#ECFCCB","--color-bg-surface":"#FFFFFF","--color-border":"#D9F99D","--color-text-primary":"#365314","--color-text-secondary":"#4D7C0F","--color-text-disabled":"#84CC16","--color-sidebar-user-card-bg":"#D9F99D","--color-nav-active-bg":"#D9F99D","--color-nav-active-text":"#365314","--color-pill-bg":"#F7FEE7","--color-pill-active-bg":"#65A30D","--glass-bg":"rgba(255, 255, 255, 0.5)","--glass-border":"rgba(101, 163, 13, 0.2)","--card-bg":"rgba(255, 255, 255, 0.7)","--card-border":"rgba(101, 163, 13, 0.15)"}', NULL, NULL, 220, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (23, 'midnight-pro', '午夜极客主题', '极致深邃极客风格', '["dark","tech"]', '["深色","极简","专业"]', 'linear-gradient(135deg, #020617 0%, #0F172A 100%)', '#38BDF8', 'rgba(15, 23, 42, 0.8)', '{"--color-primary":"#38BDF8","--color-primary-rgb":"56, 189, 248","--color-bg-page":"#020617","--color-bg-surface":"#0F172A","--color-border":"#1E293B","--color-sidebar-user-card-bg":"rgba(15, 23, 42, 0.8)","--color-nav-active-bg":"#38BDF8","--color-nav-active-text":"#020617","--color-pill-bg":"rgba(15, 23, 42, 0.8)","--color-pill-active-bg":"#38BDF8","--color-pill-active-text":"#020617","--glass-bg":"rgba(15, 23, 42, 0.7)","--glass-border":"rgba(56, 189, 248, 0.15)","--glass-blur":"16px","--card-bg":"rgba(15, 23, 42, 0.8)","--card-border":"rgba(56, 189, 248, 0.1)","--card-shadow":"0 8px 32px 0 rgba(0, 0, 0, 0.4)"}', NULL, NULL, 230, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (24, 'rose-gold', '玫瑰金主题', '奢华优雅玫瑰金风格', '["light","luxury"]', '["浅色","奢华","优雅"]', 'linear-gradient(135deg, #FFF0F3 0%, #FFF5F7 100%)', '#E11D48', 'rgba(255, 240, 243, 0.6)', '{"--color-primary":"#E11D48","--color-primary-rgb":"225, 29, 72","--color-secondary-success":"#10B981","--color-secondary-warning":"#F59E0B","--color-secondary-danger":"#EF4444","--color-secondary-info":"#3B82F6","--color-bg-page":"#FFF0F3","--color-bg-surface":"#FFFFFF","--color-border":"#FFE4E6","--color-text-primary":"#881337","--color-text-secondary":"#BE123C","--color-text-disabled":"#FDA4AF","--color-sidebar-user-card-bg":"#FFE4E6","--color-nav-active-bg":"#FFE4E6","--color-nav-active-text":"#881337","--color-pill-bg":"#FFF0F3","--color-pill-active-bg":"#E11D48","--color-pill-active-text":"#FFFFFF","--glass-bg":"rgba(255, 255, 255, 0.6)","--glass-border":"rgba(225, 29, 72, 0.2)","--glass-shadow":"0 8px 32px 0 rgba(225, 29, 72, 0.1)","--glass-blur":"20px","--card-bg":"rgba(255, 255, 255, 0.7)","--card-border":"rgba(225, 29, 72, 0.15)","--card-shadow":"0 8px 32px 0 rgba(225, 29, 72, 0.08)"}', NULL, NULL, 240, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (25, 'abyssal-blue', '深渊蓝主题', '极致深沉静谧深渊', '["dark","tech"]', '["深色","神秘","深邃"]', 'linear-gradient(135deg, #000428 0%, #004e92 100%)', '#00D2FF', 'rgba(0, 4, 40, 0.8)', '{"--color-primary":"#00D2FF","--color-primary-rgb":"0, 210, 255","--color-bg-page":"#000428","--color-bg-surface":"#004e92","--color-border":"#002b5e","--color-text-primary":"#E0F2FE","--color-text-secondary":"#7DD3FC","--color-text-disabled":"#0369A1","--color-sidebar-user-card-bg":"rgba(0, 78, 146, 0.5)","--color-nav-active-bg":"#004e92","--color-nav-active-text":"#E0F2FE","--color-pill-bg":"rgba(0, 78, 146, 0.4)","--color-pill-active-bg":"#00D2FF","--color-pill-active-text":"#000428","--glass-bg":"rgba(0, 4, 40, 0.7)","--glass-border":"rgba(0, 210, 255, 0.2)","--glass-shadow":"0 8px 32px 0 rgba(0, 0, 0, 0.5)","--glass-blur":"20px","--card-bg":"rgba(0, 4, 40, 0.8)","--card-border":"rgba(0, 210, 255, 0.15)","--card-shadow":"0 8px 32px 0 rgba(0, 210, 255, 0.1)"}', NULL, NULL, 250, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (26, 'vintage-paper', '复古羊皮纸主题', '怀旧温暖纸质风格', '["light","nature"]', '["浅色","复古","怀旧"]', 'linear-gradient(135deg, #FEF9E7 0%, #F9E79F 100%)', '#8D6E63', 'rgba(254, 249, 231, 0.6)', '{"--color-primary":"#8D6E63","--color-primary-rgb":"141, 110, 99","--color-bg-page":"#F5E8D3","--color-bg-surface":"#FDF9F1","--color-border":"#E6D5B8","--color-text-primary":"#3E2723","--color-text-secondary":"#5D4037","--color-text-disabled":"#8D6E63","--color-sidebar-user-card-bg":"rgba(253, 249, 241, 0.8)","--color-nav-active-bg":"#8D6E63","--color-nav-active-text":"#FDF9F1","--color-pill-bg":"rgba(141, 110, 99, 0.1)","--color-pill-active-bg":"#8D6E63","--color-pill-active-text":"#FDF9F1","--glass-bg":"rgba(253, 249, 241, 0.7)","--glass-border":"rgba(141, 110, 99, 0.15)","--card-bg":"rgba(253, 249, 241, 0.85)","--card-border":"rgba(141, 110, 99, 0.1)"}', NULL, NULL, 260, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (27, 'ios-style', 'iOS 浅色风格', '苹果系统经典扁平化与毛玻璃风格', '["light","tech","luxury"]', '["浅色","苹果","极简"]', 'linear-gradient(135deg, #F2F2F7 0%, #FFFFFF 100%)', '#007AFF', 'rgba(255, 255, 255, 0.7)', '{"--color-primary":"#007AFF","--color-primary-rgb":"0, 122, 255","--color-bg-page":"#F2F2F7","--color-bg-surface":"#FFFFFF","--color-border":"#C6C6C8","--color-text-primary":"#000000","--color-text-secondary":"#8E8E93","--color-text-disabled":"#C7C7CC","--color-sidebar-user-card-bg":"rgba(255, 255, 255, 0.7)","--color-nav-active-bg":"#007AFF","--color-nav-active-text":"#FFFFFF","--color-pill-bg":"rgba(142, 142, 147, 0.12)","--color-pill-active-bg":"#007AFF","--color-pill-active-text":"#FFFFFF","--glass-bg":"rgba(255, 255, 255, 0.75)","--glass-border":"rgba(0, 0, 0, 0.05)","--glass-shadow":"0 8px 32px rgba(0, 0, 0, 0.05)","--card-bg":"rgba(255, 255, 255, 0.85)","--card-border":"rgba(0, 0, 0, 0.05)","--card-shadow":"0 2px 10px rgba(0, 0, 0, 0.04)"}', NULL, NULL, 270, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (28, 'ios-dark', 'iOS 暗黑风格', '苹果系统深色模式风格', '["dark","tech","luxury"]', '["深色","苹果","极简"]', 'linear-gradient(135deg, #000000 0%, #1C1C1E 100%)', '#0A84FF', 'rgba(28, 28, 30, 0.7)', '{"--color-primary":"#0A84FF","--color-primary-rgb":"10, 132, 255","--color-bg-page":"#000000","--color-bg-surface":"#1C1C1E","--color-border":"#38383A","--color-text-primary":"#FFFFFF","--color-text-secondary":"#EBEBF5","--color-text-disabled":"#505053","--color-sidebar-user-card-bg":"rgba(28, 28, 30, 0.7)","--color-nav-active-bg":"#0A84FF","--color-nav-active-text":"#FFFFFF","--color-pill-bg":"rgba(118, 118, 128, 0.24)","--color-pill-active-bg":"#0A84FF","--color-pill-active-text":"#FFFFFF","--glass-bg":"rgba(28, 28, 30, 0.75)","--glass-border":"rgba(255, 255, 255, 0.1)","--glass-shadow":"0 8px 32px rgba(0, 0, 0, 0.3)","--card-bg":"rgba(28, 28, 30, 0.85)","--card-border":"rgba(255, 255, 255, 0.05)","--card-shadow":"0 4px 12px rgba(0, 0, 0, 0.2)"}', NULL, NULL, 280, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (29, 'synthwave', '合成器浪潮', '80年代复古未来主义，紫橙渐变，带你重返迈阿密之夜', '["dark","tech"]', '["深色","复古","霓虹","创意"]', 'linear-gradient(135deg, #2b0f4c 0%, #ff5e00 100%)', '#00f0ff', 'rgba(43, 15, 76, 0.8)', '{"--color-primary":"#00f0ff","--color-primary-rgb":"0, 240, 255","--color-secondary-success":"#ff00ff","--color-bg-page":"#0d0221","--color-bg-surface":"#261447","--color-border":"#ff3864","--color-text-primary":"#f9f6ff","--color-text-secondary":"#b3a0e5","--color-sidebar-user-card-bg":"rgba(38, 20, 71, 0.8)","--color-nav-active-bg":"#ff00ff","--color-nav-active-text":"#000000","--color-pill-bg":"rgba(255, 0, 255, 0.2)","--color-pill-active-bg":"#00f0ff","--color-pill-active-text":"#000000","--glass-bg":"rgba(13, 2, 33, 0.6)","--glass-border":"rgba(0, 240, 255, 0.4)","--glass-shadow":"0 0 20px rgba(255, 0, 255, 0.3)","--card-bg":"linear-gradient(180deg, rgba(38, 20, 71, 0.9) 0%, rgba(13, 2, 33, 0.95) 100%)","--card-border":"rgba(255, 56, 100, 0.5)","--card-shadow":"0 8px 32px rgba(255, 0, 255, 0.15)"}', NULL, NULL, 290, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (30, 'glass-morphism-pro', '全息玻璃态', '极高透明度与流光溢彩的炫彩背景，突破次元壁的视觉体验', '["light","luxury"]', '["浅色","玻璃拟态","炫彩","未来"]', 'linear-gradient(120deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)', '#a18cd1', 'rgba(255, 255, 255, 0.2)', '{"--color-primary":"#a18cd1","--color-primary-rgb":"161, 140, 209","--color-bg-page":"#fdfbfb","--color-bg-surface":"rgba(255, 255, 255, 0.4)","--color-border":"rgba(255, 255, 255, 0.6)","--color-text-primary":"#2d3436","--color-text-secondary":"#636e72","--color-sidebar-user-card-bg":"rgba(255, 255, 255, 0.3)","--color-nav-active-bg":"linear-gradient(120deg, #a18cd1 0%, #fbc2eb 100%)","--color-nav-active-text":"#ffffff","--color-pill-bg":"rgba(255, 255, 255, 0.5)","--color-pill-active-bg":"#a18cd1","--color-pill-active-text":"#ffffff","--glass-bg":"rgba(255, 255, 255, 0.25)","--glass-border":"rgba(255, 255, 255, 0.8)","--glass-shadow":"0 8px 32px 0 rgba(31, 38, 135, 0.07)","--glass-blur":"30px","--card-bg":"rgba(255, 255, 255, 0.35)","--card-border":"rgba(255, 255, 255, 0.7)","--card-shadow":"inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 32px 0 rgba(0, 0, 0, 0.05)"}', NULL, NULL, 300, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (31, 'anime-lineart', 'Kuroha ', '动态黑白线稿风格，极致的线条艺术', '["light","creative","video"]', '["浅色","动态","视频","线稿"]', 'linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%)', '#333333', 'rgba(255, 255, 255, 0.8)', '{"--color-primary":"#333333","--color-primary-rgb":"51, 51, 51","--color-bg-page":"#ffffff","--color-bg-surface":"rgba(255, 255, 255, 0.9)","--color-border":"#999999","--color-text-primary":"#000000","--color-text-secondary":"#000000","--color-sidebar-user-card-bg":"rgba(255, 255, 255, 0.95)","--color-nav-active-bg":"#333333","--color-nav-active-text":"#ffffff","--color-pill-bg":"rgba(255, 255, 255, 0.95)","--color-pill-active-bg":"#333333","--color-pill-active-text":"#ffffff","--glass-bg":"rgba(255, 255, 255, 0.9)","--glass-border":"rgba(0, 0, 0, 0.2)","--glass-shadow":"0 8px 32px 0 rgba(0, 0, 0, 0.1)","--glass-blur":"10px","--card-bg":"rgba(255, 255, 255, 0.9)","--card-border":"rgba(0, 0, 0, 0.1)","--card-shadow":"0 4px 15px rgba(0, 0, 0, 0.08)"}', 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/themes/wallpapers/anime-lineart.mp4', 'video', 310, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (32, 'ink-samurai', '水墨武士', '传统水墨与动态武侠的完美结合，展现东方美学意境', '["light","creative","video","culture"]', '["浅色","动态","视频","国风","水墨"]', 'linear-gradient(135deg, #e6e6e6 0%, #ffffff 100%)', '#2c3e50', 'rgba(240, 240, 240, 0.7)', '{"--color-primary":"#2c3e50","--color-primary-rgb":"44, 62, 80","--color-bg-page":"#f5f5f5","--color-bg-surface":"rgba(255, 255, 255, 0.9)","--color-border":"#999999","--color-text-primary":"#000000","--color-text-secondary":"#000000","--color-sidebar-user-card-bg":"rgba(255, 255, 255, 0.95)","--color-nav-active-bg":"#2c3e50","--color-nav-active-text":"#ffffff","--color-pill-bg":"rgba(255, 255, 255, 0.95)","--color-pill-active-bg":"#2c3e50","--color-pill-active-text":"#ffffff","--glass-bg":"rgba(255, 255, 255, 0.9)","--glass-border":"rgba(44, 62, 80, 0.2)","--glass-shadow":"0 8px 32px 0 rgba(44, 62, 80, 0.1)","--glass-blur":"10px","--card-bg":"rgba(255, 255, 255, 0.9)","--card-border":"rgba(44, 62, 80, 0.1)","--card-shadow":"0 4px 20px rgba(44, 62, 80, 0.08)"}', 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/themes/wallpapers/ink-samurai.mp4', 'video', 320, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (33, 'anime-girl', '果园偶遇', '梦幻唯美的二次元少女动态壁纸', '["light","creative","video"]', '["浅色","动态","视频","二次元","少女"]', 'linear-gradient(135deg, #FEF9C3 0%, #FDE047 100%)', '#EAB308', 'rgba(255, 255, 255, 0.8)', '{"--color-primary":"#EAB308","--color-primary-rgb":"234, 179, 8","--color-bg-page":"#FEFCE8","--color-bg-surface":"rgba(255, 255, 255, 0.9)","--color-border":"#FEF08A","--color-text-primary":"#422006","--color-text-secondary":"#713F12","--color-text-disabled":"#CA8A04","--color-sidebar-user-card-bg":"rgba(255, 255, 255, 0.95)","--color-nav-active-bg":"#EAB308","--color-nav-active-text":"#ffffff","--color-pill-bg":"rgba(255, 255, 255, 0.95)","--color-pill-active-bg":"#EAB308","--color-pill-active-text":"#ffffff","--glass-bg":"rgba(255, 255, 255, 0.9)","--glass-border":"rgba(234, 179, 8, 0.2)","--glass-shadow":"0 8px 32px 0 rgba(234, 179, 8, 0.1)","--glass-blur":"10px","--card-bg":"rgba(255, 255, 255, 0.9)","--card-border":"rgba(234, 179, 8, 0.15)","--card-shadow":"0 4px 15px rgba(234, 179, 8, 0.1)"}', 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/themes/wallpapers/anime-girl.mp4', 'video', 330, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (34, 'starry-night', '星空之夜', 'AI 绘制的梦幻夜晚星空', '["dark","creative","video"]', '["深色","动态","视频","星空","AI"]', 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', '#6366f1', 'rgba(15, 23, 42, 0.6)', '{"--color-primary":"#6366f1","--color-primary-rgb":"99, 102, 241","--color-bg-page":"#0f172a","--color-bg-surface":"rgba(30, 41, 59, 0.8)","--color-border":"#334155","--color-text-primary":"#ffffff","--color-text-secondary":"#cbd5e1","--color-text-disabled":"#64748b","--color-sidebar-user-card-bg":"rgba(30, 41, 59, 0.9)","--color-nav-active-bg":"#6366f1","--color-nav-active-text":"#ffffff","--color-pill-bg":"rgba(30, 41, 59, 0.9)","--color-pill-active-bg":"#6366f1","--color-pill-active-text":"#ffffff","--glass-bg":"rgba(15, 23, 42, 0.7)","--glass-border":"rgba(99, 102, 241, 0.3)","--glass-shadow":"0 8px 32px 0 rgba(0, 0, 0, 0.3)","--glass-blur":"12px","--card-bg":"rgba(30, 41, 59, 0.7)","--card-border":"rgba(99, 102, 241, 0.2)","--card-shadow":"0 4px 20px rgba(0, 0, 0, 0.2)"}', 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/themes/wallpapers/starry-night.mp4', 'video', 340, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (35, 'anime-glow', '幻光魅影', '绚丽的二次元光效动态壁纸', '["dark","creative","video"]', '["深色","动态","视频","光效","炫酷"]', 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)', '#3b82f6', 'rgba(15, 23, 42, 0.7)', '{"--color-primary":"#3b82f6","--color-primary-rgb":"59, 130, 246","--color-bg-page":"#0f172a","--color-bg-surface":"rgba(30, 41, 59, 0.8)","--color-border":"#1e40af","--color-text-primary":"#ffffff","--color-text-secondary":"#93c5fd","--color-text-disabled":"#60a5fa","--color-sidebar-user-card-bg":"rgba(30, 41, 59, 0.9)","--color-nav-active-bg":"#3b82f6","--color-nav-active-text":"#ffffff","--color-pill-bg":"rgba(30, 41, 59, 0.9)","--color-pill-active-bg":"#3b82f6","--color-pill-active-text":"#ffffff","--glass-bg":"rgba(15, 23, 42, 0.7)","--glass-border":"rgba(59, 130, 246, 0.3)","--glass-shadow":"0 8px 32px 0 rgba(0, 0, 0, 0.3)","--glass-blur":"10px","--card-bg":"rgba(30, 41, 59, 0.75)","--card-border":"rgba(59, 130, 246, 0.2)","--card-shadow":"0 4px 20px rgba(0, 0, 0, 0.25)"}', 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/themes/wallpapers/anime-glow.mp4', 'video', 350, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (36, 'mountain-coast', '山林海岸', '宁静的山林与壮丽的海岸线动态壁纸', '["dark","nature","video"]', '["深色","动态","视频","山林","海岸"]', 'linear-gradient(135deg, #0f172a 0%, #0d9488 100%)', '#0d9488', 'rgba(15, 23, 42, 0.6)', '{"--color-primary":"#0d9488","--color-primary-rgb":"13, 148, 136","--color-bg-page":"#0f172a","--color-bg-surface":"rgba(15, 23, 42, 0.8)","--color-border":"#134e4a","--color-text-primary":"#f0fdf4","--color-text-secondary":"#ccfbf1","--color-text-disabled":"#5eead4","--color-sidebar-user-card-bg":"rgba(15, 23, 42, 0.9)","--color-nav-active-bg":"#0d9488","--color-nav-active-text":"#ffffff","--color-pill-bg":"rgba(15, 23, 42, 0.9)","--color-pill-active-bg":"#0d9488","--color-pill-active-text":"#ffffff","--glass-bg":"rgba(15, 23, 42, 0.7)","--glass-border":"rgba(13, 148, 136, 0.3)","--glass-shadow":"0 8px 32px 0 rgba(0, 0, 0, 0.3)","--glass-blur":"10px","--card-bg":"rgba(15, 23, 42, 0.75)","--card-border":"rgba(13, 148, 136, 0.2)","--card-shadow":"0 4px 20px rgba(0, 0, 0, 0.25)"}', 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/themes/wallpapers/mountain-coast.mp4', 'video', 360, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (37, 'windows-red', '我的window黑化了', '深邃的暗红流动纹理，经典 Windows 风格', '["dark","tech","static"]', '["深色","静态","Windows","红色"]', 'linear-gradient(135deg, #0f172a 0%, #b91c1c 100%)', '#ef4444', 'rgba(15, 23, 42, 0.6)', '{"--color-primary":"#ef4444","--color-primary-rgb":"239, 68, 68","--color-bg-page":"#0f172a","--color-bg-surface":"rgba(15, 23, 42, 0.8)","--color-border":"#7f1d1d","--color-text-primary":"#fef2f2","--color-text-secondary":"#fca5a5","--color-text-disabled":"#f87171","--color-sidebar-user-card-bg":"rgba(15, 23, 42, 0.9)","--color-nav-active-bg":"#ef4444","--color-nav-active-text":"#ffffff","--color-pill-bg":"rgba(15, 23, 42, 0.9)","--color-pill-active-bg":"#ef4444","--color-pill-active-text":"#ffffff","--glass-bg":"rgba(15, 23, 42, 0.7)","--glass-border":"rgba(239, 68, 68, 0.3)","--glass-shadow":"0 8px 32px 0 rgba(0, 0, 0, 0.5)","--glass-blur":"10px","--card-bg":"rgba(15, 23, 42, 0.75)","--card-border":"rgba(239, 68, 68, 0.2)","--card-shadow":"0 4px 20px rgba(0, 0, 0, 0.4)"}', 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/themes/wallpapers/windows-red-abstract.png', 'image', 370, 1);
+INSERT INTO `themes` (`theme_id`, `theme_key`, `name`, `description`, `category`, `tags`, `gradient`, `primary_color`, `sidebar_bg`, `css_variables`, `wallpaper_url`, `wallpaper_type`, `sort_order`, `is_active`) VALUES (38, 'bliss-breach', '耄耋哈气突破次元', '破碎的 Bliss 壁纸中冲出的喷火小猫，充满混沌与趣味', '["light","nature","static","creative"]', '["浅色","静态","Windows","趣味","小猫"]', 'linear-gradient(135deg, #2EA3FF 0%, #66A53A 100%)', '#2EA3FF', 'rgba(255, 255, 255, 0.45)', '{"--color-primary":"#2EA3FF","--color-primary-rgb":"46, 163, 255","--color-secondary-success":"#66A53A","--color-secondary-warning":"#FF7A00","--color-secondary-danger":"#FF4500","--color-bg-page":"#F0F9FF","--color-bg-surface":"rgba(255, 255, 255, 0.6)","--color-border":"rgba(255, 255, 255, 0.8)","--color-text-primary":"#1F1F1F","--color-text-secondary":"#475569","--color-text-disabled":"#94a3b8","--color-sidebar-user-card-bg":"rgba(255, 255, 255, 0.7)","--color-nav-active-bg":"#2EA3FF","--color-nav-active-text":"#FFFFFF","--color-pill-bg":"rgba(255, 255, 255, 0.7)","--color-pill-active-bg":"#2EA3FF","--color-pill-active-text":"#FFFFFF","--glass-bg":"rgba(255, 255, 255, 0.45)","--glass-border":"rgba(255, 255, 255, 0.6)","--glass-shadow":"0 8px 32px 0 rgba(31, 38, 135, 0.1)","--glass-blur":"15px","--card-bg":"rgba(255, 255, 255, 0.55)","--card-border":"rgba(255, 255, 255, 0.7)","--card-shadow":"0 8px 32px rgba(46, 163, 255, 0.1)"}', 'https://2638224627-1355158021.cos.ap-guangzhou.myqcloud.com/themes/wallpapers/windows-firecat.png', 'image', 380, 1);

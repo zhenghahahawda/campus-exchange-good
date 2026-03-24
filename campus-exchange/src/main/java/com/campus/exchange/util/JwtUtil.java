@@ -3,8 +3,10 @@ package com.campus.exchange.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -20,8 +22,15 @@ public class JwtUtil {
     /**
      * 密钥（至少32字节以满足HS256要求）
      */
-    private static final String SECRET_KEY_STRING = "campus_exchange_secret_key_2026_secure_enough_for_hs256";
-    private static final SecretKey SECRET_KEY = Keys.hmacShaKeyFor(SECRET_KEY_STRING.getBytes(StandardCharsets.UTF_8));
+    @Value("${jwt.secret-key:PLEASE_REPLACE_WITH_YOUR_OWN_AT_LEAST_32_CHAR_SECRET_KEY}")
+    private String secretKeyString;
+
+    private SecretKey secretKey;
+
+    @PostConstruct
+    public void init() {
+        this.secretKey = Keys.hmacShaKeyFor(secretKeyString.getBytes(StandardCharsets.UTF_8));
+    }
 
     /**
      * 访问令牌有效期（2小时）
@@ -68,7 +77,7 @@ public class JwtUtil {
                 .subject(subject)
                 .issuedAt(now)
                 .expiration(expiryDate)
-                .signWith(SECRET_KEY)
+                .signWith(secretKey)
                 .compact();
     }
 
@@ -114,7 +123,7 @@ public class JwtUtil {
     private Claims getClaimsFromToken(String token) {
         try {
             return Jwts.parser()
-                    .verifyWith(SECRET_KEY)
+                    .verifyWith(secretKey)
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();

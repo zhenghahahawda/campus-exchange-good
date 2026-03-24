@@ -49,8 +49,8 @@ export default {
 
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
   axios: {
-    baseURL: 'http://localhost:8081/api',
-    browserBaseURL: 'http://localhost:8081/api',
+    baseURL: 'http://localhost:8080/api',
+    browserBaseURL: 'http://localhost:8080/api',
     timeout: 30000
   },
 
